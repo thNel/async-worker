@@ -62,7 +62,8 @@
   },
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "libs/**/*"
   ],
   "overrides": {
     "esbuild": "^0.25.6",
