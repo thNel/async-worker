@@ -33,7 +33,11 @@ export class JobService {
     return job;
   }
 
-  async updateProgress(id: string, progress: number, log: string): Promise<Job> {
+  async updateProgress(
+    id: string,
+    progress: number,
+    log: string
+  ): Promise<Job> {
     const job = await this.findOne(id);
     job.progress = progress;
     job.logs.push(log);
@@ -55,7 +59,8 @@ export class JobService {
 
   async startJob(id: string): Promise<void> {
     const job = await this.findOne(id);
-    if (job.status !== JobStatus.Queued && job.status !== JobStatus.Failed) return;
+    if (job.status !== JobStatus.Queued && job.status !== JobStatus.Failed)
+      return;
 
     job.status = JobStatus.Running;
     await this.jobRepository.save(job);
@@ -77,7 +82,15 @@ export class JobService {
     this.activeJobs.set(id, interval);
   }
 
-  subscribeToJob(id: string, callback: (job: Job) => void): void {
+  async subscribeToJob(
+    id: string,
+    callback: (job: Job) => void
+  ): Promise<void> {
+    const job = await this.findOne(id);
+    if (job.status === JobStatus.Done) {
+      callback(job);
+      return;
+    }
     if (!this.subscribers.has(id)) {
       this.subscribers.set(id, new Set());
     }
