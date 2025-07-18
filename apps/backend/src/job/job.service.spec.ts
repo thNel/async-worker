@@ -3,10 +3,12 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Job } from '../entities/job';
 import { JobService } from './job.service';
 import { Repository } from 'typeorm';
+import { JobStatus } from '@async-workers/shared-types';
 
 describe('JobService', () => {
   let service: JobService;
   let repository: Repository<Job>;
+  let mockJob: Job;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -21,6 +23,38 @@ describe('JobService', () => {
 
     service = module.get<JobService>(JobService);
     repository = module.get<Repository<Job>>(getRepositoryToken(Job));
+
+    mockJob = {
+      id: '1',
+      name: 'Test Task',
+      status: JobStatus.Queued,
+      progress: 0,
+      logs: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Мокаем часто используемые методы
+    repository.create = jest
+      .fn()
+      .mockReturnValue({ ...mockJob, status: JobStatus.Queued });
+    repository.save = jest.fn().mockImplementation((job) => {
+      mockJob = job;
+      return Promise.resolve({ ...job } as Job);
+    });
+    repository.findOneBy = jest.fn().mockImplementation((where) => {
+      if (where.id === mockJob.id) return Promise.resolve(mockJob);
+      return Promise.resolve(undefined);
+    });
+
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+    service['activeJobs'].clear();
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -28,51 +62,142 @@ describe('JobService', () => {
   });
 
   it('should create a job', async () => {
-    const mockJob = {
-      id: '1',
-      name: 'Test Task',
-      status: 'queued',
-      progress: 0,
-      logs: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    jest.spyOn(repository, 'create').mockReturnValue(mockJob as any);
-    jest.spyOn(repository, 'save').mockResolvedValue(mockJob as any);
-
-    const result = await service.create('Test Task');
-    expect(result.name).toBe('Test Task');
-    expect(result.status).toBe('queued');
+    const result = await service.create(mockJob.name);
+    expect(result.name).toBe(mockJob.name);
+    expect(result.status).toBe(JobStatus.Queued);
   });
 
   it('should throw error if job not found', async () => {
-    jest.spyOn(repository, 'findOneBy').mockResolvedValue(null);
     await expect(service.findOne('invalid-id')).rejects.toThrow();
   });
 
-  it('should update job progress and log', async () => {
-    const mockJob = {
-      id: '1',
-      name: 'Test Task',
-      status: 'running',
-      progress: 0,
-      logs: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  it('should find a job by id', async () => {
+    const result = await service.findOne(mockJob.id);
+    expect(result).toEqual(mockJob);
+  });
 
-    jest.spyOn(repository, 'findOneBy').mockResolvedValue(mockJob as any);
-    jest.spyOn(repository, 'save').mockResolvedValue({
-      ...mockJob,
-      progress: 50,
-      logs: ['Progress updated to 50%'],
-      updatedAt: new Date(),
-    } as any);
+  it('should update job progress and add log', async () => {
+    //Добавить подписки, проверить коллбэк
+    let subscriberResult: Job | null = null;
+    service.subscribeToJob(mockJob.id, (job) => {
+      subscriberResult = job;
+    });
 
-    const result = await service.updateProgress('1', 50, 'Progress updated to 50%');
+    expect(subscriberResult).toBe(null);
 
+    const result = await service.updateProgress(
+      mockJob.id,
+      50,
+      'Progress updated to 50%'
+    );
+
+    expect(subscriberResult).toBe(result);
     expect(result.progress).toBe(50);
     expect(result.logs).toContain('Progress updated to 50%');
+  });
+
+  it('should set status to Done if progress is 100', async () => {
+    let subscriberResult: Job | null = null;
+    const subscriber = (job: Job) => {
+      subscriberResult = job;
+    };
+    service.subscribeToJob(mockJob.id, subscriber);
+
+    expect(subscriberResult).toBe(null);
+
+    const result50 = await service.updateProgress(
+      mockJob.id,
+      50,
+      'Progress updated to 50%'
+    );
+
+    expect(subscriberResult).toBe(result50);
+    expect(result50.progress).toBe(50);
+    expect(result50.logs).toContain('Progress updated to 50%');
+
+    service.unsubscribeFromJob(mockJob.id, subscriber);
+
+    const result100 = await service.updateProgress(
+      mockJob.id,
+      100,
+      'Completed'
+    );
+
+    expect(subscriberResult).toBe(result50);
+    expect(subscriberResult).not.toBe(result100);
+
+    expect(result100.progress).toBe(100);
+    expect(result100.logs).toContain('Completed');
+    expect(result100.status).toBe(JobStatus.Done);
+  });
+
+  it('should not notify unsubscribed callback', async () => {
+    let called = false;
+    const callback = (job: Job) => {
+      called = true;
+    };
+
+    service.subscribeToJob(mockJob.id, callback);
+    service.unsubscribeFromJob(mockJob.id, callback);
+
+    await service.updateProgress(mockJob.id, 50, 'Progress updated');
+
+    expect(called).toBe(false);
+  });
+
+  it('should notify all subscribers', async () => {
+    let called1 = false;
+    let called2 = false;
+
+    const cb1 = (job: Job) => {
+      called1 = true;
+    };
+    const cb2 = (job: Job) => {
+      called2 = true;
+    };
+
+    service.subscribeToJob(mockJob.id, cb1);
+    service.subscribeToJob(mockJob.id, cb2);
+
+    await service.updateProgress(mockJob.id, 50, 'Progress updated');
+
+    expect(called1).toBe(true);
+    expect(called2).toBe(true);
+  });
+
+  it('should start job if status is Queued', async () => {
+    await service.startJob('1');
+
+    expect(repository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: JobStatus.Running })
+    );
+  });
+
+  it('should start job and complete progress', async () => {
+    const updateProgressSpy = jest.spyOn(service, 'updateProgress');
+
+    expect(mockJob).toHaveProperty("status", JobStatus.Queued);
+    expect(mockJob).toHaveProperty("progress", 0);
+
+    await service.startJob('1');
+
+    await jest.runOnlyPendingTimersAsync();
+
+    expect(repository.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: JobStatus.Running, progress: 10 })
+    );
+
+    // Вызываем ещё 9 раз для достижения 100%
+    for (let i = 1; i < 10; i++) {
+      await jest.runOnlyPendingTimersAsync();
+    }
+
+    expect(repository.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: JobStatus.Done })
+    );
+
+    expect(updateProgressSpy).toHaveBeenCalledTimes(10);
+
+    expect(service['activeJobs'].has('1')).toBe(false);
   });
 });

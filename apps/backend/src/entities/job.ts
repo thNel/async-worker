@@ -8,7 +8,7 @@ export class Job {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column('text', { nullable: false })
   name!: string;
 
   @Column('text', {
@@ -34,17 +34,25 @@ export class Job {
   // })
   // status!: JobStatus;
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0, nullable: false })
   progress!: number;
 
   @Column('text', {
     default: "[]",
+    nullable: false,
     transformer: {
-      from(value: string): string[] {
-        try {
-          return JSON.parse(value);
-        } catch (e) {
-          console.warn(`Invalid JSON in "logs": ${value}`);
+      from(value: string | any[]): string[] {
+        if (typeof value === 'string') {
+          try {
+            return JSON.parse(value);
+          } catch (e) {
+            console.warn(`Invalid JSON in "logs": ${value}`);
+            return [];
+          }
+        } else if (Array.isArray(value)) {
+          return value;
+        } else {
+          console.warn(`Unexpected type for "logs":`, value);
           return [];
         }
       },
@@ -56,7 +64,7 @@ export class Job {
   logs!: string[];
 
   // Для НЕ SQLite баз данных можно использовать массивы
-  // @Column('text', { array: true, default: [] })
+  // @Column('text', { array: true, default: [], nullable: false })
   // logs!: string[];
 
   @CreateDateColumn()
