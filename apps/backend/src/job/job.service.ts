@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job } from '../entities/job';
@@ -57,10 +61,12 @@ export class JobService {
     return updatedJob;
   }
 
-  async startJob(id: string): Promise<void> {
+  async startJob(id: string): Promise<Job> {
     const job = await this.findOne(id);
     if (job.status !== JobStatus.Queued && job.status !== JobStatus.Failed)
-      return;
+      throw new BadRequestException(
+        `Job with status "${job.status}" can't be started`
+      );
 
     job.status = JobStatus.Running;
     await this.jobRepository.save(job);
@@ -80,6 +86,7 @@ export class JobService {
     }, 500);
 
     this.activeJobs.set(id, interval);
+    return job;
   }
 
   async subscribeToJob(

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, HttpCode } from '@nestjs/common';
 import { JobService } from './job.service';
 import { Job } from '../entities/job';
 import { CreateJobDto } from './dto/create-job.dto';
@@ -23,8 +23,8 @@ export class JobController {
   }
 
   @Post(':id/start')
+  @HttpCode(200)
   async start(@Param('id') id: string): Promise<Job> {
-    await this.jobService.startJob(id);
-    return this.jobService.findOne(id);
+    return await this.jobService.startJob(id);
   }
 }
