@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Res } from '@nestjs/common';
-import { JobService } from '../job/job.service';
+import { JobService, JobSubscriber } from '../job/job.service';
 import { Job } from '../entities/job';
 import type { Response } from 'express';
 import { JobStatus } from '@async-workers/shared-types';
@@ -20,15 +20,40 @@ export class SseController {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const sendUpdate = (job: Job) => {
-      res.write(`data: ${JSON.stringify(job)}\n\n`);
+    const sendUpdate: JobSubscriber = (
+      job: Job,
+      event = 'unknown-event',
+      close?: boolean
+    ) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(job)}\n\n`);
       if (job.status === JobStatus.Done) {
         this.closeConnection(id, sendUpdate, res)();
+      }
+      if (close) {
+        res.end();
       }
     };
 
     await this.jobService.subscribeToJob(id, sendUpdate);
 
     res.on('close', this.closeConnection(id, sendUpdate, res));
+  }
+
+  @Get('all')
+  async sseAll(@Res() res: Response) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const sendUpdate: JobSubscriber = (job: Job, event = 'unknown-event') => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(job)}\n\n`);
+    };
+
+    await this.jobService.subscribeToAllJobs(sendUpdate);
+
+    res.on('close', () => {
+      this.jobService.unsubscribeFromAllJobs(sendUpdate);
+      res.end();
+    });
   }
 }

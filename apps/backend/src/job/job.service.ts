@@ -8,6 +8,8 @@ import { Repository } from 'typeorm';
 import { Job } from '../entities/job';
 import { JobStatus } from '@async-workers/shared-types';
 
+export type JobSubscriber = (job: Job, event?: string, close?: boolean) => void;
+
 @Injectable()
 export class JobService {
   constructor(
@@ -16,7 +18,7 @@ export class JobService {
   ) {}
 
   private activeJobs: Map<string, NodeJS.Timeout> = new Map();
-  private subscribers: Map<string, Set<(job: Job) => void>> = new Map();
+  private subscribers: Map<string, Set<JobSubscriber>> = new Map();
 
   async create(name: string): Promise<Job> {
     const job = this.jobRepository.create({
@@ -54,7 +56,7 @@ export class JobService {
     const subscribers = this.subscribers.get(id);
     if (subscribers) {
       for (const callback of subscribers) {
-        callback(updatedJob);
+        callback(updatedJob, 'job-update');
       }
     }
 
@@ -89,13 +91,39 @@ export class JobService {
     return job;
   }
 
-  async subscribeToJob(
-    id: string,
-    callback: (job: Job) => void
-  ): Promise<void> {
+  async cancelJob(id: string): Promise<Job> {
+    const job = await this.findOne(id);
+    if (job.status !== JobStatus.Running) {
+      throw new BadRequestException(
+        `Job with status "${job.status}" can't be canceled`
+      );
+    }
+
+    job.status = JobStatus.Cancelled;
+    await this.jobRepository.save(job);
+
+    const interval = this.activeJobs.get(id);
+    if (interval) {
+      clearInterval(interval);
+      this.activeJobs.delete(id);
+    }
+
+    // Уведомляем всех подписчиков
+    const subscribers = this.subscribers.get(id);
+    if (subscribers) {
+      for (const callback of subscribers) {
+        this.unsubscribeFromJob(id, callback);
+        callback(job, 'job-canceled', true);
+      }
+    }
+
+    return job;
+  }
+
+  async subscribeToJob(id: string, callback: JobSubscriber): Promise<void> {
     const job = await this.findOne(id);
     if (job.status === JobStatus.Done) {
-      callback(job);
+      callback(job, 'job-done');
       return;
     }
     if (!this.subscribers.has(id)) {
@@ -104,9 +132,39 @@ export class JobService {
     this.subscribers.get(id)?.add(callback);
   }
 
-  unsubscribeFromJob(id: string, callback: (job: Job) => void): void {
+  unsubscribeFromJob(id: string, callback: JobSubscriber): void {
     const jobSubscribers = this.subscribers.get(id);
     if (jobSubscribers) {
+      jobSubscribers.delete(callback);
+      if (jobSubscribers.size === 0) {
+        this.subscribers.delete(id);
+      }
+    }
+  }
+
+  async subscribeToAllJobs(callback: JobSubscriber): Promise<void> {
+    const jobs = await this.findAll();
+    for (const job of jobs) {
+      switch (job.status) {
+        case JobStatus.Queued:
+        case JobStatus.Running:
+        case JobStatus.Failed:
+          await this.subscribeToJob(job.id, callback);
+          break;
+        case JobStatus.Done:
+          callback(job, 'job-done');
+          break;
+        case JobStatus.Cancelled:
+          callback(job, 'job-cancelled');
+          break;
+        default:
+          throw new BadRequestException(`Unknown job status: ${job.status}`);
+      }
+    }
+  }
+
+  unsubscribeFromAllJobs(callback: JobSubscriber): void {
+    for (const [id, jobSubscribers] of this.subscribers.entries()) {
       jobSubscribers.delete(callback);
       if (jobSubscribers.size === 0) {
         this.subscribers.delete(id);

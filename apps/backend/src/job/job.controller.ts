@@ -1,7 +1,16 @@
-import { Controller, Get, Post, Body, Param, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  HttpCode,
+  Query,
+} from '@nestjs/common';
 import { JobService } from './job.service';
 import { Job } from '../entities/job';
 import { CreateJobDto } from './dto/create-job.dto';
+import { JobStatus } from '@async-workers/shared-types';
 
 @Controller('jobs')
 export class JobController {
@@ -13,8 +22,52 @@ export class JobController {
   }
 
   @Get()
-  async findAll(): Promise<Job[]> {
-    return this.jobService.findAll();
+  async findAll(@Query('status') status?: JobStatus): Promise<Job[]> {
+    const jobs = await this.jobService.findAll();
+    if (status) {
+      return jobs.filter((job) => job.status === status);
+    }
+    return jobs;
+  }
+
+  @Get('summary')
+  async getSummary() {
+    const allJobs = await this.jobService.findAll();
+
+    const jobs = {
+      queued: allJobs.filter((j) => j.status === JobStatus.Queued),
+      running: allJobs.filter((j) => j.status === JobStatus.Running),
+      done: allJobs.filter((j) => j.status === JobStatus.Done),
+      failed: allJobs.filter((j) => j.status === JobStatus.Failed),
+    };
+
+    return {
+      total: allJobs.length,
+      queued: {
+        count: jobs.queued.length,
+        averageProgress:
+          jobs.queued.reduce((acc, job) => acc + job.progress, 0) /
+            jobs.queued.length || 0,
+      },
+      running: {
+        count: jobs.running.length,
+        averageProgress:
+          jobs.running.reduce((acc, job) => acc + job.progress, 0) /
+            jobs.running.length || 0,
+      },
+      done: {
+        count: jobs.done.length,
+        averageProgress:
+          jobs.done.reduce((acc, job) => acc + job.progress, 0) /
+            jobs.done.length || 0,
+      },
+      failed: {
+        count: jobs.failed.length,
+        averageProgress:
+          jobs.failed.reduce((acc, job) => acc + job.progress, 0) /
+            jobs.failed.length || 0,
+      },
+    };
   }
 
   @Get(':id')
@@ -26,5 +79,11 @@ export class JobController {
   @HttpCode(200)
   async start(@Param('id') id: string): Promise<Job> {
     return await this.jobService.startJob(id);
+  }
+
+  @Post(':id/cancel')
+  @HttpCode(200)
+  async cancel(@Param('id') id: string): Promise<Job> {
+    return this.jobService.cancelJob(id);
   }
 }
