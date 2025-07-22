@@ -57,6 +57,9 @@ export class JobService {
     if (subscribers) {
       for (const callback of subscribers) {
         callback(updatedJob, 'job-update');
+        if (job.status === JobStatus.Done) {
+          callback(updatedJob, 'job-done', true);
+        }
       }
     }
 
@@ -120,12 +123,7 @@ export class JobService {
     return job;
   }
 
-  async subscribeToJob(id: string, callback: JobSubscriber): Promise<void> {
-    const job = await this.findOne(id);
-    if (job.status === JobStatus.Done) {
-      callback(job, 'job-done');
-      return;
-    }
+  subscribeToJob(id: string, callback: JobSubscriber): void {
     if (!this.subscribers.has(id)) {
       this.subscribers.set(id, new Set());
     }
@@ -149,7 +147,7 @@ export class JobService {
         case JobStatus.Queued:
         case JobStatus.Running:
         case JobStatus.Failed:
-          await this.subscribeToJob(job.id, callback);
+          this.subscribeToJob(job.id, callback);
           break;
         case JobStatus.Done:
           callback(job, 'job-done');
@@ -158,7 +156,9 @@ export class JobService {
           callback(job, 'job-cancelled');
           break;
         default:
-          throw new BadRequestException(`Unknown job status: ${job.status}`);
+          throw new BadRequestException(
+            `Unknown job (${job.id}) status: ${job.status}`
+          );
       }
     }
   }

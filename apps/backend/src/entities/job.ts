@@ -1,7 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Check } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Check,
+} from 'typeorm';
 import { JobStatus } from '@async-workers/shared-types';
 
-const jobStatusValues = Object.values(JobStatus).map((v) => `'${v}'`).join(', ');
+const jobStatusValues = Object.values(JobStatus)
+  .map((v) => `'${v}'`)
+  .join(', ');
 
 @Entity()
 export class Job {
@@ -38,7 +47,7 @@ export class Job {
   progress!: number;
 
   @Column('text', {
-    default: "[]",
+    default: '[]',
     nullable: false,
     transformer: {
       from(value: string | any[]): string[] {
@@ -58,7 +67,7 @@ export class Job {
       },
       to(value: string[]): string {
         return JSON.stringify(value);
-      }
+      },
     },
   })
   logs!: string[];

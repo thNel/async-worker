@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Job } from '../entities/job';
-import { JobService } from './job.service';
+import { JobService, JobSubscriber } from './job.service';
 import { Repository } from 'typeorm';
 import { JobStatus } from '@async-workers/shared-types';
 
@@ -46,6 +46,7 @@ describe('JobService', () => {
       if (where.id === mockJob.id) return Promise.resolve(mockJob);
       return Promise.resolve(undefined);
     });
+    repository.find = jest.fn().mockReturnValue([mockJob]);
 
     jest.useFakeTimers();
   });
@@ -133,11 +134,11 @@ describe('JobService', () => {
 
   it('should not notify unsubscribed callback', async () => {
     let called = false;
-    const callback = (job: Job) => {
+    const callback: JobSubscriber = () => {
       called = true;
     };
 
-    service.subscribeToJob(mockJob.id, callback);
+    await service.subscribeToJob(mockJob.id, callback);
     service.unsubscribeFromJob(mockJob.id, callback);
 
     await service.updateProgress(mockJob.id, 50, 'Progress updated');
@@ -149,10 +150,10 @@ describe('JobService', () => {
     let called1 = false;
     let called2 = false;
 
-    const cb1 = (job: Job) => {
+    const cb1 = () => {
       called1 = true;
     };
-    const cb2 = (job: Job) => {
+    const cb2 = () => {
       called2 = true;
     };
 
@@ -176,8 +177,8 @@ describe('JobService', () => {
   it('should start job and complete progress', async () => {
     const updateProgressSpy = jest.spyOn(service, 'updateProgress');
 
-    expect(mockJob).toHaveProperty("status", JobStatus.Queued);
-    expect(mockJob).toHaveProperty("progress", 0);
+    expect(mockJob).toHaveProperty('status', JobStatus.Queued);
+    expect(mockJob).toHaveProperty('progress', 0);
 
     await service.startJob('1');
 
@@ -199,5 +200,80 @@ describe('JobService', () => {
     expect(updateProgressSpy).toHaveBeenCalledTimes(10);
 
     expect(service['activeJobs'].has('1')).toBe(false);
+  });
+
+  it('should notify subscribers with job-canceled and close flag on cancel', async () => {
+    const callback = jest.fn();
+    service['subscribers'].set(mockJob.id, new Set([callback]));
+
+    // Сначала запускаем задачу
+    await service.startJob(mockJob.id);
+
+    await service.cancelJob(mockJob.id);
+
+    expect(callback).toHaveBeenCalledWith(
+      expect.objectContaining({ status: JobStatus.Cancelled }),
+      'job-canceled',
+      true
+    );
+  });
+
+  it('should call subscriber with event "job-update"', async () => {
+    const callback = jest.fn();
+    service.subscribeToJob(mockJob.id, callback);
+
+    await service.updateProgress(mockJob.id, 50, 'Halfway');
+
+    expect(callback).toHaveBeenCalledWith(
+      expect.objectContaining({ progress: 50 }),
+      'job-update'
+    );
+  });
+
+  it('should send job-done event when progress reaches 100', async () => {
+    const callback = jest.fn();
+    service.subscribeToJob(mockJob.id, callback);
+
+    await service.updateProgress(mockJob.id, 100, 'Completed');
+
+    expect(callback).toHaveBeenCalledWith(
+      expect.objectContaining({ status: JobStatus.Done }),
+      'job-done',
+      true
+    );
+  });
+
+  it('should send job-done event when subscribing to all jobs and job is done', async () => {
+    mockJob.status = JobStatus.Done;
+    const callback = jest.fn();
+
+    await service.subscribeToAllJobs(callback);
+
+    expect(callback).toHaveBeenCalledWith(mockJob, 'job-done');
+  });
+
+  it('should subscribe to updates for running job via subscribeToAllJobs', async () => {
+    mockJob.status = JobStatus.Running;
+    const callback = jest.fn();
+
+    await service.subscribeToAllJobs(callback);
+
+    await service.updateProgress(mockJob.id, 50, 'Halfway');
+
+    expect(callback).toHaveBeenCalledWith(
+      expect.objectContaining({ progress: 50 }),
+      'job-update'
+    );
+  });
+
+  it('should unsubscribe from all jobs', () => {
+    const callback = jest.fn();
+    service['subscribers'].set('1', new Set([callback]));
+    service['subscribers'].set('2', new Set([callback]));
+
+    service.unsubscribeFromAllJobs(callback);
+
+    expect(service['subscribers'].get('1')).toBeUndefined();
+    expect(service['subscribers'].get('2')).toBeUndefined();
   });
 });

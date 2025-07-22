@@ -8,35 +8,42 @@ import { JobStatus } from '@async-workers/shared-types';
 export class SseController {
   constructor(private readonly jobService: JobService) {}
 
-  private closeConnection =
-    (id: string, cb: (job: Job) => void, res: Response) => () => {
-      this.jobService.unsubscribeFromJob(id, cb);
-      res.end();
-    };
-
   @Get(':id')
   async sse(@Param('id') id: string, @Res() res: Response) {
+    const sendEvent = (event: string, data: string) => {
+      res.write(`event: ${event}\ndata: ${data}\n\n`);
+    };
+
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+
+    // sendEvent('open', 'connection established');
 
     const sendUpdate: JobSubscriber = (
       job: Job,
       event = 'unknown-event',
       close?: boolean
     ) => {
-      res.write(`event: ${event}\ndata: ${JSON.stringify(job)}\n\n`);
-      if (job.status === JobStatus.Done) {
-        this.closeConnection(id, sendUpdate, res)();
-      }
+      sendEvent(event, JSON.stringify(job));
       if (close) {
-        res.end();
+        sendEvent('stop', 'connection ended');
+        return;
       }
     };
 
-    await this.jobService.subscribeToJob(id, sendUpdate);
+    const job = await this.jobService.findOne(id);
+    if (job.status === JobStatus.Done) {
+      sendUpdate(job, 'job-done', true);
+      return;
+    }
 
-    res.on('close', this.closeConnection(id, sendUpdate, res));
+    const unsubscribe = () =>
+      this.jobService.unsubscribeFromJob(id, sendUpdate);
+
+    res.on('close', unsubscribe);
+
+    this.jobService.subscribeToJob(id, sendUpdate);
   }
 
   @Get('all')
@@ -53,7 +60,6 @@ export class SseController {
 
     res.on('close', () => {
       this.jobService.unsubscribeFromAllJobs(sendUpdate);
-      res.end();
     });
   }
 }

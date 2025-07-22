@@ -22,11 +22,17 @@ describe('SseController', () => {
   const mockRes: Partial<Response> = {
     write: jest.fn(),
     end: jest.fn(),
-    on: jest.fn().mockImplementation(function (this: any, event: string, handler: () => void) {
-      if (event === 'close') {
-        handler();
-      }
-    }),
+    on: jest
+      .fn()
+      .mockImplementation(function (
+        this: any,
+        event: string,
+        handler: () => void
+      ) {
+        if (event === 'close') {
+          handler();
+        }
+      }),
     setHeader: jest.fn(),
   };
 
@@ -39,6 +45,9 @@ describe('SseController', () => {
           useValue: {
             subscribeToJob: jest.fn(),
             unsubscribeFromJob: jest.fn(),
+            subscribeToAllJobs: jest.fn(),
+            unsubscribeFromAllJobs: jest.fn(),
+            findOne: jest.fn().mockReturnValue(mockJob),
           },
         },
       ],
@@ -56,50 +65,114 @@ describe('SseController', () => {
     it('should set correct headers', () => {
       controller.sse(mockJob.id, mockRes as Response);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream');
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-cache');
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Connection', 'keep-alive');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'text/event-stream'
+      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'no-cache'
+      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Connection',
+        'keep-alive'
+      );
     });
 
-    it('should call jobService.subscribeToJob with correct id and callback', () => {
+    it('should call jobService.subscribeToJob with correct id and callback', async () => {
       const subscribeSpy = jest.spyOn(jobService, 'subscribeToJob');
 
-      controller.sse(mockJob.id, mockRes as Response);
+      await controller.sse(mockJob.id, mockRes as Response);
 
-      expect(subscribeSpy).toHaveBeenCalledWith(mockJob.id, expect.any(Function));
+      expect(subscribeSpy).toHaveBeenCalledWith(
+        mockJob.id,
+        expect.any(Function)
+      );
     });
 
-    it('should send job updates via res.write', () => {
-      controller.sse(mockJob.id, mockRes as Response);
+    it('should send job updates via res.write', async () => {
+      await controller.sse(mockJob.id, mockRes as Response);
 
       // Имитируем обновление задачи
-      const callback = (jobService.subscribeToJob as jest.Mock).mock.calls[0][1];
-      callback(mockJob);
+      const callback = (jobService.subscribeToJob as jest.Mock).mock
+        .calls[0][1];
+      callback(mockJob, 'job-update');
 
-      expect(mockRes.write).toHaveBeenCalledWith(`data: ${JSON.stringify(mockJob)}\n\n`);
+      expect(mockRes.write).toHaveBeenCalledWith(
+        `event: job-update\ndata: ${JSON.stringify(mockJob)}\n\n`
+      );
     });
 
-    it('should call jobService.unsubscribeFromJob on connection close', () => {
+    it('should call jobService.unsubscribeFromJob on connection close', async () => {
       const unsubscribeSpy = jest.spyOn(jobService, 'unsubscribeFromJob');
 
-      controller.sse(mockJob.id, mockRes as Response);
+      await controller.sse(mockJob.id, mockRes as Response);
 
       // Имитируем закрытие соединения
-      const closeHandler = (mockRes.on as jest.Mock).mock.calls.find(call => call[0] === 'close')?.[1];
+      const closeHandler = (mockRes.on as jest.Mock).mock.calls.find(
+        (call) => call[0] === 'close'
+      )?.[1];
 
       closeHandler?.();
 
-      expect(unsubscribeSpy).toHaveBeenCalledWith(mockJob.id, expect.any(Function));
+      expect(unsubscribeSpy).toHaveBeenCalledWith(
+        mockJob.id,
+        expect.any(Function)
+      );
+    });
+  });
+
+  describe('sseAll', () => {
+    it('should set correct headers', () => {
+      controller.sseAll(mockRes as Response);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'text/event-stream'
+      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'no-cache'
+      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Connection',
+        'keep-alive'
+      );
     });
 
-    it('should end response on connection close', () => {
-      controller.sse(mockJob.id, mockRes as Response);
+    it('should call jobService.subscribeToAllJobs with callback', () => {
+      const subscribeSpy = jest.spyOn(jobService, 'subscribeToAllJobs');
 
-      const closeHandler = (mockRes.on as jest.Mock).mock.calls.find(call => call[0] === 'close')?.[1];
+      controller.sseAll(mockRes as Response);
 
+      expect(subscribeSpy).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it('should send job updates via res.write', async () => {
+      await controller.sseAll(mockRes as Response);
+
+      // Имитируем обновление задачи
+      const callback = (jobService.subscribeToAllJobs as jest.Mock).mock
+        .calls[0][0];
+      callback(mockJob);
+
+      expect(mockRes.write).toHaveBeenCalledWith(
+        `event: unknown-event\ndata: ${JSON.stringify(mockJob)}\n\n`
+      );
+    });
+
+    it('should call jobService.unsubscribeFromAllJobs on connection close', async () => {
+      const unsubscribeSpy = jest.spyOn(jobService, 'unsubscribeFromAllJobs');
+
+      await controller.sseAll(mockRes as Response);
+
+      // Имитируем закрытие соединения
+      const closeHandler = (mockRes.on as jest.Mock).mock.calls.find(
+        (call) => call[0] === 'close'
+      )?.[1];
       closeHandler?.();
 
-      expect(mockRes.end).toHaveBeenCalled();
+      expect(unsubscribeSpy).toHaveBeenCalledWith(expect.any(Function));
     });
   });
 });
