@@ -49,12 +49,10 @@ describe('Job API', () => {
       const data = JSON.parse(event.data);
       progress = data.progress;
     });
-    eventSource.addEventListener('job-done', (event) => {
-      console.log(event.type, event.data);
+    eventSource.addEventListener('job-done', () => {
       done = true;
     });
-    eventSource.addEventListener('stop', (event) => {
-      console.log(event.type, event.data);
+    eventSource.addEventListener('stop', () => {
       eventSource.close();
     });
 
@@ -121,4 +119,107 @@ describe('Job API', () => {
     expect(getRes.status).toBe(200);
     expect(getRes.data.status).toBe(JobStatus.Cancelled);
   });
+
+  describe('GET /jobs', () => {
+    let createdJobId: string;
+
+    beforeAll(async () => {
+      // Создадим задачу для проверки, что список не пустой
+      const res = await axios.post<Job>('/jobs', { name: 'List Test Task' });
+      expect(res.status).toBe(201);
+      createdJobId = res.data.id;
+    });
+
+    it('should return a list of jobs', async () => {
+      const res = await axios.get<Job[]>('/jobs');
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.data)).toBe(true);
+      // Проверим, что созданная задача есть в списке
+      const foundJob = res.data.find((job) => job.id === createdJobId);
+      expect(foundJob).toBeDefined();
+      if (foundJob) {
+        expect(foundJob.name).toBe('List Test Task');
+      }
+    });
+  });
+
+  describe('GET /jobs/summary', () => {
+    it('should return job summary statistics', async () => {
+      const res = await axios.get('/jobs/summary');
+
+      expect(res.status).toBe(200);
+      expect(res.data).toHaveProperty('total');
+      expect(typeof res.data.total).toBe('number');
+      expect(res.data).toHaveProperty('queued');
+      expect(res.data).toHaveProperty('running');
+      expect(res.data).toHaveProperty('done');
+      expect(res.data).toHaveProperty('failed');
+    });
+  });
+});
+
+describe('GET /sse/all', () => {
+  let jobIdForSseAll: string;
+
+  beforeAll(async () => {
+    const createRes = await axios.post<Job>('/jobs', {
+      name: 'SSE All Test Task',
+    });
+    expect(createRes.status).toBe(201);
+    jobIdForSseAll = createRes.data.id;
+  });
+
+  it('should receive updates for all jobs via SSE', async () => {
+    const eventSource = new EventSource(`${axios.defaults.baseURL}/sse/all`);
+
+    let receivedJobUpdateForSpecificId = false;
+
+    eventSource.addEventListener('job-update', (event) => {
+      const data = JSON.parse(event.data);
+      if (data.id === jobIdForSseAll) {
+        receivedJobUpdateForSpecificId = true;
+        expect(data.status).toBe(JobStatus.Running);
+        expect(typeof data.progress).toBe('number');
+      }
+    });
+
+    const timers: NodeJS.Timeout[] = [];
+
+    const startRes = await axios.post<Job>(`/jobs/${jobIdForSseAll}/start`);
+    expect(startRes.status).toBe(200);
+
+    await Promise.race([
+      new Promise<void>((resolve) => {
+        const checkInterval = timers.push(
+          setInterval(() => {
+            if (receivedJobUpdateForSpecificId) {
+              clearInterval(checkInterval);
+              eventSource.close();
+              for (const timer of timers) {
+                clearInterval(timer);
+                clearTimeout(timer);
+              }
+              resolve();
+            }
+          }, 500)
+        );
+      }),
+      new Promise<void>((resolve) =>
+        timers.push(
+          setTimeout(() => {
+            console.log('Timeout waiting for /sse/all events');
+            eventSource.close();
+            for (const timer of timers) {
+              clearInterval(timer);
+              clearTimeout(timer);
+            }
+            resolve();
+          }, 5000)
+        )
+      ),
+    ]);
+
+    expect(receivedJobUpdateForSpecificId).toBe(true);
+  }, 10000);
 });
