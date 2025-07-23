@@ -45,3 +45,6 @@ Thumbs.db
 
 test-output
 /db.sqlite
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
