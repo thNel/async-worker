@@ -153,7 +153,7 @@ export class JobService {
           callback(job, 'job-done');
           break;
         case JobStatus.Cancelled:
-          callback(job, 'job-cancelled');
+          callback(job, 'job-canceled');
           break;
         default:
           throw new BadRequestException(
