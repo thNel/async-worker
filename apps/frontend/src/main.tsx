@@ -1,15 +1,21 @@
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { RouterProvider, createBrowserRouter } from 'react-router';
-import routes from 'virtual:generated-pages-react';
+import {
+  RouterProvider,
+  createBrowserRouter,
+  RouteObject,
+  IndexRouteObject,
+} from 'react-router';
+import routes from '~react-pages';
 import Layout from '@/layout';
+import './styles.css';
 
 const router = createBrowserRouter([
   {
     element: <Layout />,
-    children: routes.map((route) => {
+    children: routes.map<RouteObject>((route): RouteObject => {
       if (route.path === '/') {
-        return { ...route, index: true, path: undefined };
+        return { ...route, index: true, path: undefined } as IndexRouteObject;
       }
       return route.path
         ? { ...route, path: route.path.replace(/^\//, '') }
@@ -24,6 +30,6 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <RouterProvider router={router} fallbackElement={<p>Loading...</p>} />
+    <RouterProvider router={router} />
   </StrictMode>
 );

@@ -2,7 +2,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import tailwindcss from '@tailwindcss/vite';
 import Pages from 'vite-plugin-pages';
 
 export default defineConfig(() => ({
@@ -16,12 +15,7 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
   },
-  plugins: [react(), tailwindcss(), Pages({ dirs: 'src/routes', resolver: 'react' })],
-  css: {
-    postcss: {
-      plugins: [require('tailwindcss'), require('autoprefixer')],
-    },
-  },
+  plugins: [react(), Pages({ dirs: 'src/routes', resolver: 'react' })],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
