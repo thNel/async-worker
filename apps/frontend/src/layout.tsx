@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router';
 
-export function Component() {
+export function Layout() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="border-b">
@@ -28,3 +28,5 @@ export function Component() {
     </div>
   );
 }
+
+export default Layout;
