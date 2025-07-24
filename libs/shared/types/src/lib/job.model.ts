@@ -3,7 +3,7 @@ export enum JobStatus {
   Running = 'running',
   Done = 'done',
   Failed = 'failed',
-  Canceled = 'Canceled',
+  Canceled = 'canceled',
 }
 
 export interface Job {
