@@ -43,8 +43,6 @@
 *   **Запуск unit-тестов:**
     ```bash
     npx nx test backend
-    # или
-    npm test backend
     ```
 *   **Запуск E2E-тестов:**
     ```bash
