@@ -28,7 +28,7 @@ export class JobService {
     return this.jobRepository.save(job);
   }
 
-  // Нет смысла тестировать этот метод, т.к. в нём просто замокается jobRepository.find()
+  // Нет смысла тестировать этот метод, так как в нём просто замокается jobRepository.find()
   async findAll(): Promise<Job[]> {
     return this.jobRepository.find();
   }

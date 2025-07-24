@@ -25,7 +25,7 @@ describe('SseController', () => {
     on: jest
       .fn()
       .mockImplementation(function (
-        this: any,
+        this: unknown,
         event: string,
         handler: () => void
       ) {

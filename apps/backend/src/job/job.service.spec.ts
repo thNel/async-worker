@@ -78,7 +78,6 @@ describe('JobService', () => {
   });
 
   it('should update job progress and add log', async () => {
-    //Добавить подписки, проверить коллбэк
     let subscriberResult: Job | null = null;
     service.subscribeToJob(mockJob.id, (job) => {
       subscriberResult = job;

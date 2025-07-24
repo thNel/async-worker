@@ -50,11 +50,11 @@ export class Job {
     default: '[]',
     nullable: false,
     transformer: {
-      from(value: string | any[]): string[] {
+      from(value: string | unknown): string[] {
         if (typeof value === 'string') {
           try {
             return JSON.parse(value);
-          } catch (e) {
+          } catch {
             console.warn(`Invalid JSON in "logs": ${value}`);
             return [];
           }
