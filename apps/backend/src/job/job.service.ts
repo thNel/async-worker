@@ -102,7 +102,7 @@ export class JobService {
       );
     }
 
-    job.status = JobStatus.Cancelled;
+    job.status = JobStatus.Canceled;
     await this.jobRepository.save(job);
 
     const interval = this.activeJobs.get(id);
@@ -152,7 +152,7 @@ export class JobService {
         case JobStatus.Done:
           callback(job, 'job-done');
           break;
-        case JobStatus.Cancelled:
+        case JobStatus.Canceled:
           callback(job, 'job-canceled');
           break;
         default:

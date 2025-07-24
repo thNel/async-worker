@@ -211,7 +211,7 @@ describe('JobService', () => {
     await service.cancelJob(mockJob.id);
 
     expect(callback).toHaveBeenCalledWith(
-      expect.objectContaining({ status: JobStatus.Cancelled }),
+      expect.objectContaining({ status: JobStatus.Canceled }),
       'job-canceled',
       true
     );
