@@ -1,18 +1,22 @@
-import { StrictMode, Suspense } from 'react';
+import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { BrowserRouter, useRoutes } from 'react-router-dom';
-import routes from '~react-pages';
+import { RouterProvider, createBrowserRouter } from 'react-router';
+import routes from 'virtual:generated-pages-react';
 import Layout from '@/layout';
 
-function App() {
-  return (
-    <Layout>
-      <Suspense fallback={<p>Loading...</p>}>
-        {useRoutes(routes)}
-      </Suspense>
-    </Layout>
-  );
-}
+const router = createBrowserRouter([
+  {
+    element: <Layout />,
+    children: routes.map((route) => {
+      if (route.path === '/') {
+        return { ...route, index: true, path: undefined };
+      }
+      return route.path
+        ? { ...route, path: route.path.replace(/^\//, '') }
+        : route;
+    }),
+  },
+]);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -20,8 +24,6 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <RouterProvider router={router} fallbackElement={<p>Loading...</p>} />
   </StrictMode>
 );
