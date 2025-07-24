@@ -15,3 +15,24 @@ export interface Job {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface JobStatusSummary {
+  count: number;
+  averageProgress: number;
+}
+
+export interface JobsSummary {
+  total: number;
+  queued: JobStatusSummary;
+  running: JobStatusSummary;
+  done: JobStatusSummary;
+  failed: JobStatusSummary;
+}
+
+export interface JobsStats {
+  startDate: Date;
+  queued: JobStatusSummary;
+  running: JobStatusSummary;
+  done: JobStatusSummary;
+  failed: JobStatusSummary;
+}

@@ -45,7 +45,7 @@ describe('Job API', () => {
       console.error('SSE error:', err);
       eventSource.close();
     };
-    eventSource.addEventListener('job-update', (event) => {
+    eventSource.addEventListener('job-updated', (event) => {
       const data = JSON.parse(event.data);
       progress = data.progress;
     });
@@ -80,7 +80,7 @@ describe('Job API', () => {
       `${axios.defaults.baseURL}/sse/${jobId}`
     );
 
-    eventSource.addEventListener('job-update', (event) => {
+    eventSource.addEventListener('job-updated', (event) => {
       const job: Job = JSON.parse(event.data);
       eventCount++;
       expect(job.id).toBe(jobId);
@@ -175,7 +175,7 @@ describe('GET /sse/all', () => {
 
     let receivedJobUpdateForSpecificId = false;
 
-    eventSource.addEventListener('job-update', (event) => {
+    eventSource.addEventListener('job-updated', (event) => {
       const data = JSON.parse(event.data);
       if (data.id === jobIdForSseAll) {
         receivedJobUpdateForSpecificId = true;

@@ -217,7 +217,7 @@ describe('JobService', () => {
     );
   });
 
-  it('should call subscriber with event "job-update"', async () => {
+  it('should call subscriber with event "job-updated"', async () => {
     const callback = jest.fn();
     service.subscribeToJob(mockJob.id, callback);
 
@@ -225,7 +225,7 @@ describe('JobService', () => {
 
     expect(callback).toHaveBeenCalledWith(
       expect.objectContaining({ progress: 50 }),
-      'job-update'
+      'job-updated'
     );
   });
 
@@ -261,7 +261,7 @@ describe('JobService', () => {
 
     expect(callback).toHaveBeenCalledWith(
       expect.objectContaining({ progress: 50 }),
-      'job-update'
+      'job-updated'
     );
   });
 
@@ -274,5 +274,19 @@ describe('JobService', () => {
 
     expect(service['subscribers'].get('1')).toBeUndefined();
     expect(service['subscribers'].get('2')).toBeUndefined();
+  });
+
+  it('should calculate stats for given range', async () => {
+    const jobs: Job[] = [
+      { ...mockJob, createdAt: new Date(), status: JobStatus.Done },
+      { ...mockJob, createdAt: new Date(), status: JobStatus.Failed },
+    ];
+
+    repository.find = jest.fn().mockResolvedValue(jobs);
+
+    const stats = await service.getStats(1);
+
+    expect(stats[0].done.count).toBe(1);
+    expect(stats[0].failed.count).toBe(1);
   });
 });

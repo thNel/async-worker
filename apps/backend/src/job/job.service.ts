@@ -4,9 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Job } from '../entities/job';
-import { JobStatus } from '@async-workers/shared-types';
+import { JobsStats, JobStatus } from '@async-workers/shared-types';
+import { addDays, startOfDay } from 'date-fns';
 
 export type JobSubscriber = (job: Job, event?: string, close?: boolean) => void;
 
@@ -33,6 +34,66 @@ export class JobService {
     return this.jobRepository.find();
   }
 
+  async getStats(rangeDays = 7): Promise<JobsStats[]> {
+    const start = startOfDay(addDays(new Date(), -(rangeDays - 1)));
+
+    const jobs = await this.jobRepository.find({
+      where: { createdAt: MoreThanOrEqual(start) },
+    });
+
+    const stats: Record<string, JobsStats> = {};
+
+    for (const job of jobs) {
+      const key = job.createdAt.toISOString().slice(0, 10);
+      if (!stats[key]) {
+        stats[key] = {
+          startDate: startOfDay(job.createdAt),
+          done: { count: 0, averageProgress: 0 },
+          failed: { count: 0, averageProgress: 0 },
+          running: { count: 0, averageProgress: 0 },
+          queued: { count: 0, averageProgress: 0 },
+        };
+      }
+      const day = stats[key];
+      if (!day) continue;
+      switch (job.status) {
+        case JobStatus.Done:
+          day.done.count++;
+          day.done.averageProgress += job.progress;
+          break;
+        case JobStatus.Failed:
+          day.failed.count++;
+          day.failed.averageProgress += job.progress;
+          break;
+        case JobStatus.Running:
+          day.running.count++;
+          day.running.averageProgress += job.progress;
+          break;
+        case JobStatus.Queued:
+          day.queued.count++;
+          day.queued.averageProgress += job.progress;
+          break;
+      }
+    }
+
+    for (const day in stats) {
+      stats[day].done.averageProgress = Math.round(
+        stats[day].done.averageProgress / stats[day].done.count || 0
+      );
+      stats[day].failed.averageProgress = Math.round(
+        stats[day].failed.averageProgress / stats[day].failed.count || 0
+      );
+      stats[day].running.averageProgress = Math.round(
+        stats[day].running.averageProgress / stats[day].running.count || 0
+      );
+      stats[day].queued.averageProgress = Math.round(
+        stats[day].queued.averageProgress / stats[day].queued.count || 0
+      );
+    }
+
+    return Object.values(stats);
+  }
+
   async findOne(id: string): Promise<Job> {
     const job = await this.jobRepository.findOneBy({ id });
     if (!job) throw new NotFoundException(`Job with ID ${id} not found`);
@@ -56,7 +117,7 @@ export class JobService {
     const subscribers = this.subscribers.get(id);
     if (subscribers) {
       for (const callback of subscribers) {
-        callback(updatedJob, 'job-update');
+        callback(updatedJob, 'job-updated');
         if (job.status === JobStatus.Done) {
           callback(updatedJob, 'job-done', true);
         }

@@ -32,6 +32,7 @@ describe('JobController', () => {
             startJob: jest.fn(),
             subscribeToJob: jest.fn(),
             unsubscribeFromJob: jest.fn(),
+            getStats: jest.fn(),
           },
         },
       ],
@@ -166,6 +167,17 @@ describe('JobController', () => {
 
       expect(result.running.count).toBe(3);
       expect(result.running.averageProgress).toBeCloseTo(40); // (20 + 40 + 60) / 3
+    });
+  });
+
+  describe('getStats', () => {
+    it('should parse range and call jobService.getStats', async () => {
+      const getStats = jest
+        .spyOn(jobService as any, 'getStats')
+        .mockResolvedValue([]);
+
+      await controller.getStats('5d');
+      expect(getStats).toHaveBeenCalledWith(5);
     });
   });
 });

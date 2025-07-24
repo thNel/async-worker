@@ -96,10 +96,10 @@ describe('SseController', () => {
       // Имитируем обновление задачи
       const callback = (jobService.subscribeToJob as jest.Mock).mock
         .calls[0][1];
-      callback(mockJob, 'job-update');
+      callback(mockJob, 'job-updated');
 
       expect(mockRes.write).toHaveBeenCalledWith(
-        `event: job-update\ndata: ${JSON.stringify(mockJob)}\n\n`
+        `event: job-updated\ndata: ${JSON.stringify(mockJob)}\n\n`
       );
     });
 
