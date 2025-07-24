@@ -1,4 +1,4 @@
-export function Component() {
+export default function NotFound() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Страница не найдена</h1>
@@ -6,7 +6,3 @@ export function Component() {
     </div>
   );
 }
-
-export const route = {
-  path: '*',
-};

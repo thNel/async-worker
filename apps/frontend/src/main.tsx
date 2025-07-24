@@ -1,7 +1,18 @@
-import { StrictMode } from 'react';
+import { StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { RouterProvider } from 'react-router';
-import { router } from '@/router';
+import { BrowserRouter, useRoutes } from 'react-router-dom';
+import routes from '~react-pages';
+import Layout from '@/layout';
+
+function App() {
+  return (
+    <Layout>
+      <Suspense fallback={<p>Loading...</p>}>
+        {useRoutes(routes)}
+      </Suspense>
+    </Layout>
+  );
+}
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -9,6 +20,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </StrictMode>
 );

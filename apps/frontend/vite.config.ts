@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import tailwindcss from '@tailwindcss/vite';
+import Pages from 'vite-plugin-pages';
 
 export default defineConfig(() => ({
   root: __dirname,
@@ -15,7 +16,7 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), Pages({ dirs: 'src/routes', resolver: 'react' })],
   css: {
     postcss: {
       plugins: [require('tailwindcss'), require('autoprefixer')],
