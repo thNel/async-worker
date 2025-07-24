@@ -18,7 +18,7 @@
 *   **Хранение данных:** TypeORM для взаимодействия с реляционной базой данных.
 *   **Мониторинг в реальном времени (SSE):**
     *   Подписка на обновления конкретной задачи: `GET /api/sse/:id`
-    *   Подписка на обновления всех задач: `GET /api/sse/all` (события `job-update`, `job-done`, `job-canceled`)
+    *   Подписка на обновления всех задач: `GET /api/sse/all` (события `job-updated`, `job-done`, `job-canceled`)
 *   **API:**
     *   Базовая проверка: `GET /api`
     *   Создать задачу: `POST /api/jobs`
@@ -43,25 +43,35 @@
 *   **Запуск unit-тестов:**
     ```bash
     npx nx test backend
+    # или
+    npm test backend
     ```
 *   **Запуск E2E-тестов:**
     ```bash
     npx nx e2e backend-e2e
     ```
 
-### `frontend` (TODO)
+### `frontend`
 
-*Описание будущего фронтенд-приложения будет добавлено здесь.*
+Интерфейс панели управления построен на **React** и **Vite** с использованием
+**Tailwind CSS** и компонентов [shadcn/ui](https://ui.shadcn.com/). Данные
+загружаются через **TanStack&nbsp;Query**, маршрутизация реализована при помощи
+**React Router**.
 
-<!-- *   **Технологии:** React/Vue/Angular, TypeScript, etc.
-*   **Разработка:**
-    ```bash
-    npx nx serve frontend
-    ```
-*   **Сборка:**
-    ```bash
-    npx nx build frontend
-    ``` -->
+**Запуск в режиме разработки:**
+
+```bash
+npx nx serve frontend
+```
+
+**Сборка:**
+
+```bash
+npx nx build frontend
+```
+
+Основные зависимости: React&nbsp;19, TanStack&nbsp;Query&nbsp;v5, shadcn/ui,
+react-hook-form, zod, Zustand.
 
 ## Библиотеки
 

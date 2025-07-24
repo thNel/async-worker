@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Job } from '../entities/job';
 import { JobStatus } from '@async-workers/shared-types';
 
@@ -33,6 +33,42 @@ export class JobService {
     return this.jobRepository.find();
   }
 
+  async getStats(rangeDays = 7): Promise<
+    { date: string; done: number; failed: number; running: number }[]
+  > {
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(start.getDate() - (rangeDays - 1));
+    start.setHours(0, 0, 0, 0);
+
+    const jobs = await this.jobRepository.find({
+      where: { createdAt: MoreThanOrEqual(start) },
+    });
+
+    const stats: Record<
+      string,
+      { date: string; done: number; failed: number; running: number }
+    > = {};
+
+    for (let i = 0; i < rangeDays; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      stats[key] = { date: key, done: 0, failed: 0, running: 0 };
+    }
+
+    for (const job of jobs) {
+      const key = job.createdAt.toISOString().slice(0, 10);
+      const day = stats[key];
+      if (!day) continue;
+      if (job.status === JobStatus.Done) day.done++;
+      else if (job.status === JobStatus.Failed) day.failed++;
+      else if (job.status === JobStatus.Running) day.running++;
+    }
+
+    return Object.values(stats);
+  }
+
   async findOne(id: string): Promise<Job> {
     const job = await this.jobRepository.findOneBy({ id });
     if (!job) throw new NotFoundException(`Job with ID ${id} not found`);
@@ -56,7 +92,7 @@ export class JobService {
     const subscribers = this.subscribers.get(id);
     if (subscribers) {
       for (const callback of subscribers) {
-        callback(updatedJob, 'job-update');
+        callback(updatedJob, 'job-updated');
         if (job.status === JobStatus.Done) {
           callback(updatedJob, 'job-done', true);
         }

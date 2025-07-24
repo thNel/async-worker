@@ -168,4 +168,15 @@ describe('JobController', () => {
       expect(result.running.averageProgress).toBeCloseTo(40); // (20 + 40 + 60) / 3
     });
   });
+
+  describe('getStats', () => {
+    it('should parse range and call jobService.getStats', async () => {
+      const getStats = jest
+        .spyOn(jobService as any, 'getStats')
+        .mockResolvedValue([]);
+
+      await controller.getStats('5d');
+      expect(getStats).toHaveBeenCalledWith(5);
+    });
+  });
 });

@@ -70,6 +70,13 @@ export class JobController {
     };
   }
 
+  @Get('stats')
+  async getStats(@Query('range') range = '7d') {
+    const match = /^(\d+)d$/.exec(range ?? '7d');
+    const days = match ? parseInt(match[1], 10) : 7;
+    return this.jobService.getStats(days);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Job> {
     return this.jobService.findOne(id);

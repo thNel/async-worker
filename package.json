@@ -2,7 +2,10 @@
   "name": "@async-workers/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "test": "nx test",
+    "build": "nx build"
+  },
   "private": true,
   "dependencies": {
     "@nestjs/common": "^11.1.4",
