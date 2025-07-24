@@ -117,7 +117,7 @@ describe('Job API', () => {
 
     const getRes = await axios.get<Job>(`/jobs/${jobId}`);
     expect(getRes.status).toBe(200);
-    expect(getRes.data.status).toBe(JobStatus.Cancelled);
+    expect(getRes.data.status).toBe(JobStatus.Canceled);
   });
 
   describe('GET /jobs', () => {
