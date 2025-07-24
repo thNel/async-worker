@@ -6,3 +6,7 @@ export function Component() {
     </div>
   );
 }
+
+export const route = {
+  path: '*',
+};
