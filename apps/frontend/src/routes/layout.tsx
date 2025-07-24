@@ -1,7 +1,6 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 
-const AppLayout: React.FC = () => {
+export function Component() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="border-b">
@@ -28,6 +27,4 @@ const AppLayout: React.FC = () => {
       </footer>
     </div>
   );
-};
-
-export default AppLayout;
+}
