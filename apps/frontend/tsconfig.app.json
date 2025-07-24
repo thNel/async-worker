@@ -4,10 +4,13 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
-    "lib": ["dom", "es2022"],
+    "lib": ["dom"],
     "types": [
-      "vite/client",
-      "vite-plugin-pages/client-react"
+      "node",
+      "@nx/react/typings/cssmodule.d.ts",
+      "@nx/react/typings/image.d.ts",
+      "vite/client"
+      ,"vite-plugin-pages/client-react"
     ],
     "rootDir": "src",
     "module": "esnext",
