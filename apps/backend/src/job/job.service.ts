@@ -6,7 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Job } from '../entities/job';
-import { JobStatus } from '@async-workers/shared-types';
+import { JobsStats, JobStatus } from '@async-workers/shared-types';
+import { addDays, startOfDay } from 'date-fns';
 
 export type JobSubscriber = (job: Job, event?: string, close?: boolean) => void;
 
@@ -33,37 +34,61 @@ export class JobService {
     return this.jobRepository.find();
   }
 
-  async getStats(rangeDays = 7): Promise<
-    { date: string; done: number; failed: number; running: number }[]
-  > {
-    const now = new Date();
-    const start = new Date(now);
-    start.setDate(start.getDate() - (rangeDays - 1));
-    start.setHours(0, 0, 0, 0);
+  async getStats(rangeDays = 7): Promise<JobsStats[]> {
+    const start = startOfDay(addDays(new Date(), -(rangeDays - 1)));
 
     const jobs = await this.jobRepository.find({
       where: { createdAt: MoreThanOrEqual(start) },
     });
 
-    const stats: Record<
-      string,
-      { date: string; done: number; failed: number; running: number }
-    > = {};
-
-    for (let i = 0; i < rangeDays; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const key = d.toISOString().slice(0, 10);
-      stats[key] = { date: key, done: 0, failed: 0, running: 0 };
-    }
+    const stats: Record<string, JobsStats> = {};
 
     for (const job of jobs) {
       const key = job.createdAt.toISOString().slice(0, 10);
+      if (!stats[key]) {
+        stats[key] = {
+          startDate: startOfDay(job.createdAt),
+          done: { count: 0, averageProgress: 0 },
+          failed: { count: 0, averageProgress: 0 },
+          running: { count: 0, averageProgress: 0 },
+          queued: { count: 0, averageProgress: 0 },
+        };
+      }
       const day = stats[key];
       if (!day) continue;
-      if (job.status === JobStatus.Done) day.done++;
-      else if (job.status === JobStatus.Failed) day.failed++;
-      else if (job.status === JobStatus.Running) day.running++;
+      switch (job.status) {
+        case JobStatus.Done:
+          day.done.count++;
+          day.done.averageProgress += job.progress;
+          break;
+        case JobStatus.Failed:
+          day.failed.count++;
+          day.failed.averageProgress += job.progress;
+          break;
+        case JobStatus.Running:
+          day.running.count++;
+          day.running.averageProgress += job.progress;
+          break;
+        case JobStatus.Queued:
+          day.queued.count++;
+          day.queued.averageProgress += job.progress;
+          break;
+      }
+    }
+
+    for (const day in stats) {
+      stats[day].done.averageProgress = Math.round(
+        stats[day].done.averageProgress / stats[day].done.count || 0
+      );
+      stats[day].failed.averageProgress = Math.round(
+        stats[day].failed.averageProgress / stats[day].failed.count || 0
+      );
+      stats[day].running.averageProgress = Math.round(
+        stats[day].running.averageProgress / stats[day].running.count || 0
+      );
+      stats[day].queued.averageProgress = Math.round(
+        stats[day].queued.averageProgress / stats[day].queued.count || 0
+      );
     }
 
     return Object.values(stats);

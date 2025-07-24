@@ -285,7 +285,8 @@ describe('JobService', () => {
     repository.find = jest.fn().mockResolvedValue(jobs);
 
     const stats = await service.getStats(1);
-    expect(stats[0].done).toBe(1);
-    expect(stats[0].failed).toBe(1);
+
+    expect(stats[0].done.count).toBe(1);
+    expect(stats[0].failed.count).toBe(1);
   });
 });

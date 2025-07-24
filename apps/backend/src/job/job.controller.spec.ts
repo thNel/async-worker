@@ -32,6 +32,7 @@ describe('JobController', () => {
             startJob: jest.fn(),
             subscribeToJob: jest.fn(),
             unsubscribeFromJob: jest.fn(),
+            getStats: jest.fn(),
           },
         },
       ],

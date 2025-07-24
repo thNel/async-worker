@@ -10,7 +10,7 @@ import {
 import { JobService } from './job.service';
 import { Job } from '../entities/job';
 import { CreateJobDto } from './dto/create-job.dto';
-import { JobStatus } from '@async-workers/shared-types';
+import { JobsSummary, JobStatus } from '@async-workers/shared-types';
 
 @Controller('jobs')
 export class JobController {
@@ -31,7 +31,7 @@ export class JobController {
   }
 
   @Get('summary')
-  async getSummary() {
+  async getSummary(): Promise<JobsSummary> {
     const allJobs = await this.jobService.findAll();
 
     const jobs = {
@@ -45,27 +45,31 @@ export class JobController {
       total: allJobs.length,
       queued: {
         count: jobs.queued.length,
-        averageProgress:
+        averageProgress: Math.round(
           jobs.queued.reduce((acc, job) => acc + job.progress, 0) /
-            jobs.queued.length || 0,
+            jobs.queued.length || 0
+        ),
       },
       running: {
         count: jobs.running.length,
-        averageProgress:
+        averageProgress: Math.round(
           jobs.running.reduce((acc, job) => acc + job.progress, 0) /
-            jobs.running.length || 0,
+            jobs.running.length || 0
+        ),
       },
       done: {
         count: jobs.done.length,
-        averageProgress:
+        averageProgress: Math.round(
           jobs.done.reduce((acc, job) => acc + job.progress, 0) /
-            jobs.done.length || 0,
+            jobs.done.length || 0
+        ),
       },
       failed: {
         count: jobs.failed.length,
-        averageProgress:
+        averageProgress: Math.round(
           jobs.failed.reduce((acc, job) => acc + job.progress, 0) /
-            jobs.failed.length || 0,
+            jobs.failed.length || 0
+        ),
       },
     };
   }
