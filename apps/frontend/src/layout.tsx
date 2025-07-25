@@ -2,8 +2,8 @@ import { Outlet } from 'react-router';
 
 export function Layout() {
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <header className="border-b">
+    <div className="flex flex-col items-center min-h-screen bg-background text-foreground">
+      <header className="border-b flex w-full justify-center">
         <div className="container flex items-center justify-between h-16 px-4">
           <div className="flex items-center space-x-2">
             <h1 className="text-xl font-bold">AsyncWorkers Dashboard</h1>
@@ -20,7 +20,7 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <footer className="border-t py-4 text-center text-sm text-muted-foreground">
+      <footer className="border-t py-4 text-center text-sm text-muted-foreground flex w-full justify-center">
         <div className="container px-4">
           AsyncWorkers Dashboard &copy; {new Date().getFullYear()}
         </div>
