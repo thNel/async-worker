@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useJob } from '@/lib/queries';
 import { useSseListener } from '@/hooks/useSseListener';
 import { queryClient } from '@/lib/react-query';
@@ -20,10 +20,12 @@ export default function JobDetailsPage() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">{job.name}</h1>
       <div>Статус: {job.status}</div>
-      <Progress value={job.progress} />
-      <pre className="bg-muted p-2 rounded text-sm overflow-x-auto">
-        {job.logs.join('\n')}
-      </pre>
+      {!!job.progress && <Progress value={job.progress} />}
+      {!!job.logs.length && (
+        <pre className="bg-muted p-2 rounded text-sm overflow-x-auto">
+          {job.logs.join('\n')}
+        </pre>
+      )}
     </div>
   );
 }

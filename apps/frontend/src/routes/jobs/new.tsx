@@ -1,6 +1,7 @@
+import React from 'react';
 import { useState } from 'react';
-import { createJob } from '@/lib/api';
-import { useNavigate } from 'react-router-dom';
+import { DataAccess } from '@async-workers/data-access';
+import { useNavigate } from 'react-router';
 import { toast } from '@/hooks/use-toast';
 
 export default function NewJobPage() {
@@ -10,8 +11,8 @@ export default function NewJobPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const job = await createJob(name);
-      toast({ title: 'Задача создана' });
+      const job = await DataAccess.createJob(name);
+      toast({ title: `Задача "${name}" создана` });
       navigate(`/jobs/${job.id}`);
     } catch {
       toast({ title: 'Ошибка создания', variant: 'destructive' });

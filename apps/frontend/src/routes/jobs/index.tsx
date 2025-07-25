@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useJobs } from '@/lib/queries';
 import { useSseListener } from '@/hooks/useSseListener';
 import { queryClient } from '@/lib/react-query';
@@ -22,8 +22,7 @@ export default function JobsPage() {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left border-b">
-            <th className="py-2">ID</th>
-            <th>Название</th>
+            <th className="py-2">Название</th>
             <th>Статус</th>
             <th>Прогресс</th>
           </tr>
@@ -33,12 +32,12 @@ export default function JobsPage() {
             <tr key={job.id} className="border-b hover:bg-muted/50">
               <td className="py-2">
                 <Link to={`/jobs/${job.id}`} className="underline">
-                  {job.id}
+                  {job.name}
                 </Link>
               </td>
-              <td>{job.name}</td>
               <td>{job.status}</td>
               <td>{job.progress}%</td>
+              <td></td>
             </tr>
           ))}
         </tbody>

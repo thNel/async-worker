@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import * as ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom/client';
 import {
   RouterProvider,
   createBrowserRouter,
@@ -11,7 +11,6 @@ import { queryClient } from '@/lib/react-query';
 import routes from '~react-pages';
 import Layout from '@/layout';
 import './styles.css';
-
 
 const router = createBrowserRouter([
   {

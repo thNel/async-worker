@@ -1,18 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchJobs, fetchJob, fetchJobsSummary, fetchJobsStats } from './api';
+import { DataAccess } from '@async-workers/data-access';
+import { JobStatus } from '@async-workers/shared-types';
 
-export function useJobs() {
-  return useQuery({ queryKey: ['jobs'], queryFn: fetchJobs });
+export function useJobs(status?: JobStatus) {
+  return useQuery({
+    queryKey: ['jobs', status],
+    queryFn: () => DataAccess.getAllJobs(status),
+  });
 }
 
 export function useJob(id: string) {
-  return useQuery({ queryKey: ['job', id], queryFn: () => fetchJob(id), enabled: !!id });
+  return useQuery({
+    queryKey: ['job', id],
+    queryFn: () => DataAccess.getJobById(id),
+    enabled: !!id,
+  });
 }
 
 export function useJobsSummary() {
-  return useQuery({ queryKey: ['jobs-summary'], queryFn: fetchJobsSummary });
+  return useQuery({
+    queryKey: ['jobs-summary'],
+    queryFn: DataAccess.getJobsSummary,
+  });
 }
 
-export function useJobsStats(range = '7d') {
-  return useQuery({ queryKey: ['jobs-stats', range], queryFn: () => fetchJobsStats(range) });
+export function useJobsStats(days = 7) {
+  return useQuery({
+    queryKey: ['jobs-stats', days],
+    queryFn: () => DataAccess.getJobsStats(days),
+  });
 }

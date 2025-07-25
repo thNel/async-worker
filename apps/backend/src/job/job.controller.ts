@@ -10,7 +10,7 @@ import {
 import { JobService } from './job.service';
 import { Job } from '../entities/job';
 import { CreateJobDto } from './dto/create-job.dto';
-import { JobsSummary, JobStatus } from '@async-workers/shared-types';
+import { JobsStats, JobsSummary, JobStatus } from '@async-workers/shared-types';
 
 @Controller('jobs')
 export class JobController {
@@ -75,9 +75,7 @@ export class JobController {
   }
 
   @Get('stats')
-  async getStats(@Query('range') range = '7d') {
-    const match = /^(\d+)d$/.exec(range ?? '7d');
-    const days = match ? parseInt(match[1], 10) : 7;
+  async getStats(@Query('days') days = 7): Promise<JobsStats[]> {
     return this.jobService.getStats(days);
   }
 
