@@ -6,9 +6,12 @@ import {
   RouteObject,
   IndexRouteObject,
 } from 'react-router';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/react-query';
 import routes from '~react-pages';
 import Layout from '@/layout';
 import './styles.css';
+
 
 const router = createBrowserRouter([
   {
@@ -30,6 +33,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>
 );
