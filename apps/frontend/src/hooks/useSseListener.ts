@@ -1,20 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import { Job } from '@async-workers/shared-types';
+import { useToast } from '@/hooks/use-toast';
+import { queryClient as defaultQueryClient } from '@/utils/queries';
 
 export interface SseListenerOptions {
-  url: string;
-  events: string[];
-  queryClient: QueryClient;
+  id: Insecure<string>;
+  url?: string;
+  events?: string[];
+  queryClient?: QueryClient;
 }
 
 export function useSseListener({
-  url,
-  events,
-  queryClient,
+  id,
+  url = `/api/sse/${id}`,
+  events = ['job-updated', 'job-done', 'job-canceled'],
+  queryClient = defaultQueryClient,
 }: SseListenerOptions) {
+  const { toast } = useToast();
+  const source = useMemo(() => new EventSource(url), [url]);
   useEffect(() => {
-    const source = new EventSource(url);
+    if (!id || !source) return;
     source.addEventListener('stop', () => source.close());
 
     for (const event of events) {
@@ -24,14 +30,17 @@ export function useSseListener({
           if (data.id) {
             queryClient.setQueryData(['job', data.id], data);
           }
-          queryClient.invalidateQueries(['jobs']);
-        } catch {
-          queryClient.invalidateQueries(['jobs']);
+        } catch (e) {
+          console.error(e);
+          toast({
+            title: 'Error processing SSE event',
+            variant: 'destructive',
+          });
         }
       });
     }
     return () => {
       source.close();
     };
-  }, [url, events, queryClient]);
+  }, [url, events, queryClient, toast, id, source]);
 }

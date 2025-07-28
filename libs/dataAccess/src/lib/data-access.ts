@@ -38,8 +38,9 @@ class DataAccess {
     return data;
   };
 
-  public startJob = async (jobId: string): Promise<Job> => {
+  public startJob = async (jobId: string, cb?: () => void): Promise<Job> => {
     const { data } = await this.API.post<Job>(`/jobs/${jobId}/start`);
+    cb?.();
     return data;
   };
 

@@ -1,15 +1,12 @@
 import { Link } from 'react-router';
-import { useJobs } from '@/lib/queries';
+import { useJobs } from '@/utils/queries';
 import { useSseListener } from '@/hooks/useSseListener';
-import { queryClient } from '@/lib/react-query';
 
 export default function JobsPage() {
   const { data: jobs, isLoading } = useJobs();
 
   useSseListener({
-    url: '/api/sse/all',
-    events: ['job-updated', 'job-done', 'job-canceled'],
-    queryClient,
+    id: 'all',
   });
 
   if (isLoading) {

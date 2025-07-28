@@ -1,26 +1,44 @@
 import { useParams } from 'react-router';
-import { useJob } from '@/lib/queries';
 import { useSseListener } from '@/hooks/useSseListener';
-import { queryClient } from '@/lib/react-query';
+import { useJob } from '@/utils/queries';
 import { Progress } from '@/components/ui/progress';
+import { JobStatus } from '@async-workers/shared-types';
+import { Button } from '@/components/ui/button';
+import { DataAccess } from '@async-workers/data-access';
+import { useToast } from '@/hooks/use-toast';
 
 export default function JobDetailsPage() {
   const { id } = useParams();
-  const { data: job } = useJob(id || '');
+  const { data: job, isLoading } = useJob(id);
+  const { toast } = useToast();
 
-  useSseListener({
-    url: `/api/sse/${id}`,
-    events: ['job-updated', 'job-done', 'job-canceled', 'stop'],
-    queryClient,
-  });
+  useSseListener({ id });
 
-  if (!job) return <div>Загрузка...</div>;
+  if (isLoading) return <div>Загрузка...</div>;
+
+  if (!job) return <div>Задача не найдена</div>;
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">{job.name}</h1>
       <div>Статус: {job.status}</div>
       {!!job.progress && <Progress value={job.progress} />}
+      {job.status === JobStatus.Queued && (
+        <Button
+          variant="default"
+          onClick={() =>
+            DataAccess.startJob(job.id, () =>
+              toast({
+                title: 'Job started',
+                description: job.name,
+              })
+            )
+          }
+        >
+          {' '}
+          Запустить задачу
+        </Button>
+      )}
       {!!job.logs.length && (
         <pre className="bg-muted p-2 rounded text-sm overflow-x-auto">
           {job.logs.join('\n')}

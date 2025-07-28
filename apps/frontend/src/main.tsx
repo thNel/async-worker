@@ -7,10 +7,10 @@ import {
   IndexRouteObject,
 } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/react-query';
 import routes from '~react-pages';
 import Layout from '@/layout';
 import './styles.css';
+import { queryClient } from '@/utils/queries';
 
 const router = createBrowserRouter([
   {
