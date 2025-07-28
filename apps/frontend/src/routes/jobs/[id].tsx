@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { useParams, Link } from 'react-router';
 import { useSseListener } from '@/hooks/useSseListener';
 import { useJob } from '@/utils/queries';
 import { Progress } from '@/components/ui/progress';
@@ -20,6 +20,9 @@ export default function JobDetailsPage() {
 
   return (
     <div className="space-y-4">
+      <Button variant="outline" asChild>
+        <Link to="/jobs">Назад к списку</Link>
+      </Button>
       <h1 className="text-2xl font-bold">{job.name}</h1>
       <div>Статус: {job.status}</div>
       {!!job.progress && <Progress value={job.progress} />}
@@ -31,7 +34,7 @@ export default function JobDetailsPage() {
               toast({
                 title: 'Job started',
                 description: job.name,
-              })
+              }),
             )
           }
         >
