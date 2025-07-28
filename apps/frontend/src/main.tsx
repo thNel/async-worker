@@ -1,14 +1,16 @@
 import { StrictMode } from 'react';
-import * as ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom/client';
 import {
   RouterProvider,
   createBrowserRouter,
   RouteObject,
   IndexRouteObject,
 } from 'react-router';
+import { QueryClientProvider } from '@tanstack/react-query';
 import routes from '~react-pages';
 import Layout from '@/layout';
 import './styles.css';
+import { queryClient } from '@/utils/queries';
 
 const router = createBrowserRouter([
   {
@@ -30,6 +32,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>
 );
