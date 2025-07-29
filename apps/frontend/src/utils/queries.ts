@@ -30,7 +30,7 @@ export function useJobsQuery(status?: JobStatus) {
   return query;
 }
 
-export function useJob(id: Insecure<string>) {
+export function useJob(id: Nullish<string>) {
   const { setJob } = useJobActions();
 
   const query = useQuery({

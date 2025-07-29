@@ -16,7 +16,7 @@ class DataAccess {
     return data;
   };
 
-  public getJobById = async (id: Insecure<string>): Promise<Job> => {
+  public getJobById = async (id: Nullish<string>): Promise<Job> => {
     if (!id) {
       throw new Error('Job ID is required');
     }
