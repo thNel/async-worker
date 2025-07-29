@@ -1,39 +1,63 @@
-import { useQuery } from '@tanstack/react-query';
-import { useJobStore } from '@/stores/jobStore';
+import { QueryClient, useQuery } from '@tanstack/react-query';
+import { useJobActions } from '@/hooks/useJobStore';
 import { DataAccess } from '@async-workers/data-access';
 import { JobStatus } from '@async-workers/shared-types';
-import { QueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 export const queryClient = new QueryClient();
 
-export function useJobs(status?: JobStatus) {
-  const store = useJobStore.getState();
+export function useJobsQuery(status?: JobStatus) {
+  const { updateGroup, setJob, setAll } = useJobActions();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['jobs', status],
-    queryFn: async () => {
-      const jobs = await DataAccess.getAllJobs(status);
+    queryFn: async () => await DataAccess.getAllJobs(status),
+  });
+
+  useEffect(() => {
+    if (query.data) {
       if (status) {
-        store.updateGroup(status, jobs, async (id) => {
+        updateGroup(status, query.data, async (id) => {
           const job = await DataAccess.getJobById(id);
-          store.setJob(job);
+          setJob(job);
         });
       } else {
-        store.setAll(jobs);
+        setAll(query.data);
       }
-      return jobs;
-    },
-  });
+    }
+  }, [query.data, status, updateGroup, setAll, setJob]);
+
+  return query;
 }
 
 export function useJob(id: Insecure<string>) {
-  return useQuery({
+  const { setJob } = useJobActions();
+
+  const query = useQuery({
     queryKey: ['job', id],
-    queryFn: async () => {
-      const job = await DataAccess.getJobById(id!);
-      useJobStore.getState().setJob(job);
-      return job;
-    },
+    queryFn: async () => await DataAccess.getJobById(id),
     enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (query.data) {
+      setJob(query.data);
+    }
+  }, [query.data, setJob]);
+
+  return query;
+}
+
+export function useJobsSummary() {
+  return useQuery({
+    queryKey: ['jobs-summary'],
+    queryFn: DataAccess.getJobsSummary,
+  });
+}
+
+export function useJobsStats(days = 7) {
+  return useQuery({
+    queryKey: ['jobs-stats', days],
+    queryFn: () => DataAccess.getJobsStats(days),
   });
 }

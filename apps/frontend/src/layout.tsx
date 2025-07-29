@@ -7,7 +7,7 @@ export function Layout() {
         <div className="container flex items-center justify-between h-16 px-4">
           <div className="flex items-center space-x-6">
             <h1 className="text-xl font-bold">
-              <Link to="/">AsyncWorkers Dashboard</Link>
+              <Link to="/">AsyncWorkers</Link>
             </h1>
             <nav className="flex space-x-4">
               <Link to="/dashboard" className="text-sm hover:underline">
@@ -21,11 +21,6 @@ export function Layout() {
               </Link>
             </nav>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              Добро пожаловать!
-            </div>
-          </div>
         </div>
       </header>
 
@@ -35,7 +30,7 @@ export function Layout() {
 
       <footer className="border-t py-4 text-center text-sm text-muted-foreground flex w-full justify-center">
         <div className="container px-4">
-          AsyncWorkers Dashboard &copy; {new Date().getFullYear()}
+          AsyncWorkers&copy; {new Date().getFullYear()}
         </div>
       </footer>
     </div>
