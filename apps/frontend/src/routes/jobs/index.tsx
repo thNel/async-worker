@@ -45,7 +45,6 @@ export default function JobsPage() {
                 </td>
                 <td>{job.status}</td>
                 <td>{job.progress}%</td>
-                <td></td>
               </tr>
             ))}
           </tbody>

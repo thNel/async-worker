@@ -13,6 +13,7 @@ export class SseController {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
 
     const sendUpdate: JobSubscriber = (job: Job, event = 'unknown-event') => {
       res.write(`event: ${event}\ndata: ${JSON.stringify(job)}\n\n`);
@@ -34,6 +35,7 @@ export class SseController {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
 
     // sendEvent('open', 'connection established');
 

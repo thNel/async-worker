@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/useToast';
 import { queryClient } from '@/utils/queries';
 import { useJobActions } from '@/hooks/useJobStore';
 
-export function useSseListener(id: Insecure<string>) {
+export function useSseListener(id: Nullish<string>) {
   const url = `/api/sse/${id}`;
 
   const { toast } = useToast();

@@ -1,10 +1,5 @@
 import axios from 'axios';
-import {
-  Job,
-  JobsStats,
-  JobsSummary,
-  JobStatus,
-} from '@async-workers/shared-types';
+import { Job, JobsStats, JobsSummary, JobStatus } from '@async-workers/shared-types';
 
 class DataAccess {
   private API = axios.create({ baseURL: '/api' });
@@ -16,7 +11,7 @@ class DataAccess {
     return data;
   };
 
-  public getJobById = async (id: Insecure<string>): Promise<Job> => {
+  public getJobById = async (id: Nullish<string>): Promise<Job> => {
     if (!id) {
       throw new Error('Job ID is required');
     }
