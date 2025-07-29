@@ -11,6 +11,8 @@ import routes from '~react-pages';
 import Layout from '@/layout';
 import './styles.css';
 import { queryClient } from '@/utils/queries';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { Toaster } from '@/components/ui/toaster';
 
 const router = createBrowserRouter([
   {
@@ -33,7 +35,11 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
+      <Toaster />
       <RouterProvider router={router} />
+      {import.meta.env.MODE === 'development' && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
     </QueryClientProvider>
   </StrictMode>
 );

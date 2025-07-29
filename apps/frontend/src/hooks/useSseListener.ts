@@ -1,26 +1,18 @@
-import { useEffect, useMemo } from 'react';
-import { QueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Job } from '@async-workers/shared-types';
-import { useToast } from '@/hooks/use-toast';
-import { queryClient as defaultQueryClient } from '@/utils/queries';
+import { useToast } from '@/hooks/useToast';
+import { queryClient } from '@/utils/queries';
+import { useJobActions } from '@/hooks/useJobStore';
 
-export interface SseListenerOptions {
-  id: Insecure<string>;
-  url?: string;
-  events?: string[];
-  queryClient?: QueryClient;
-}
+export function useSseListener(id: Insecure<string>) {
+  const url = `/api/sse/${id}`;
 
-export function useSseListener({
-  id,
-  url = `/api/sse/${id}`,
-  events = ['job-updated', 'job-done', 'job-canceled'],
-  queryClient = defaultQueryClient,
-}: SseListenerOptions) {
   const { toast } = useToast();
-  const source = useMemo(() => new EventSource(url), [url]);
+  const { setJob } = useJobActions();
   useEffect(() => {
-    if (!id || !source) return;
+    if (!id) return;
+    const events = ['job-updated', 'job-done', 'job-canceled'];
+    const source = new EventSource(url);
     source.addEventListener('stop', () => source.close());
 
     for (const event of events) {
@@ -29,6 +21,7 @@ export function useSseListener({
           const data: Job = JSON.parse(e.data);
           if (data.id) {
             queryClient.setQueryData(['job', data.id], data);
+            setJob(data);
           }
         } catch (e) {
           console.error(e);
@@ -42,5 +35,5 @@ export function useSseListener({
     return () => {
       source.close();
     };
-  }, [url, events, queryClient, toast, id, source]);
+  }, [url, toast, id, setJob]);
 }

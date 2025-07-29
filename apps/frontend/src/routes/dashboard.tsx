@@ -1,4 +1,4 @@
-import { useJobsSummary, useJobsStats } from '@/lib/queries';
+import { useJobsSummary, useJobsStats } from '@/utils/queries';
 
 export default function DashboardPage() {
   const { data: summary } = useJobsSummary();

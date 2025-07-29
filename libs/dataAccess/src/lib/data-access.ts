@@ -16,7 +16,10 @@ class DataAccess {
     return data;
   };
 
-  public getJobById = async (id: string): Promise<Job> => {
+  public getJobById = async (id: Insecure<string>): Promise<Job> => {
+    if (!id) {
+      throw new Error('Job ID is required');
+    }
     const { data } = await this.API.get<Job>(`/jobs/${id}`);
     return data;
   };
@@ -44,8 +47,9 @@ class DataAccess {
     return data;
   };
 
-  public cancelJob = async (jobId: string): Promise<Job> => {
+  public cancelJob = async (jobId: string, cb?: () => void): Promise<Job> => {
     const { data } = await this.API.post<Job>(`/jobs/${jobId}/cancel`);
+    cb?.();
     return data;
   };
 }

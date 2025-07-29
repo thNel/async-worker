@@ -172,11 +172,9 @@ describe('JobController', () => {
 
   describe('getStats', () => {
     it('should parse range and call jobService.getStats', async () => {
-      const getStats = jest
-        .spyOn(jobService as any, 'getStats')
-        .mockResolvedValue([]);
+      const getStats = jest.spyOn(jobService, 'getStats').mockResolvedValue([]);
 
-      await controller.getStats('5d');
+      await controller.getStats(5);
       expect(getStats).toHaveBeenCalledWith(5);
     });
   });
