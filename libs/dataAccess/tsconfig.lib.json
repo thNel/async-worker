@@ -10,9 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
+  "include": ["src/**/*.ts", "../../types.d.ts"],
   "references": [
     {
       "path": "../shared/types/tsconfig.lib.json"

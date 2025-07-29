@@ -1,5 +1,10 @@
 import axios from 'axios';
-import { Job, JobsStats, JobsSummary, JobStatus } from '@async-workers/shared-types';
+import {
+  Job,
+  JobsStats,
+  JobsSummary,
+  JobStatus,
+} from '@async-workers/shared-types';
 
 class DataAccess {
   private API = axios.create({ baseURL: '/api' });

@@ -17,6 +17,5 @@
     "strict": true,
     "target": "es2022",
     "customConditions": ["development"]
-  },
-  "files": ["./global-types.d.ts"]
+  }
 }
