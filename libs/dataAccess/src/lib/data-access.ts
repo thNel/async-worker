@@ -10,6 +10,7 @@ class DataAccess {
   private API = axios.create({ baseURL: '/api' });
 
   private handleError = (err: unknown): Promise<never> => {
+    console.error('DataAccess error', err);
     if (axios.isAxiosError(err)) {
       return Promise.reject(err.response?.data?.message ?? err.message);
     }

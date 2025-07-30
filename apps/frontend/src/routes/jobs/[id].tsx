@@ -27,7 +27,8 @@ export default function JobDetailsPage() {
         })
       );
     } catch (e) {
-      toast({ title: 'Ошибка запуска', variant: 'destructive' });
+      const message = e instanceof Error ? e.message : String(e);
+      toast({ title: 'Ошибка запуска', description: message, variant: 'destructive' });
     }
   };
 
@@ -40,7 +41,8 @@ export default function JobDetailsPage() {
         })
       );
     } catch (e) {
-      toast({ title: 'Ошибка отмены', variant: 'destructive' });
+      const message = e instanceof Error ? e.message : String(e);
+      toast({ title: 'Ошибка отмены', description: message, variant: 'destructive' });
     }
   };
 
