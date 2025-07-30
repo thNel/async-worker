@@ -94,3 +94,7 @@ react-hook-form, zod, Zustand.
     ```bash
     yarn install
     ```
+
+2. Для фронтенда можно настроить базовый URL API через переменную окружения
+   `VITE_API_BASE_URL`. По умолчанию используется `/api`. Локальные значения
+   можно задать в файле `apps/frontend/config/.local.env`.
