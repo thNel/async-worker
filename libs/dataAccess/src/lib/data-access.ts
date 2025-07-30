@@ -7,7 +7,9 @@ import {
 } from '@async-workers/shared-types';
 
 class DataAccess {
-  private API = axios.create({ baseURL: '/api' });
+  private API = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
+  });
 
   public getAllJobs = async (status?: JobStatus): Promise<Job[]> => {
     const { data } = await this.API.get<Job[]>('/jobs', {

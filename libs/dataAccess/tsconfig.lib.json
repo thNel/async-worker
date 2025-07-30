@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["src/**/*.ts", "../../types.d.ts"],
   "references": [
