@@ -19,21 +19,29 @@ export default function JobDetailsPage() {
   if (!job) return <div>Задача не найдена</div>;
 
   const handleStartJob = async () => {
-    await DataAccess.startJob(job.id, () =>
-      toast({
-        title: 'Job started',
-        description: job.name,
-      })
-    );
+    try {
+      await DataAccess.startJob(job.id, () =>
+        toast({
+          title: 'Job started',
+          description: job.name,
+        })
+      );
+    } catch (e) {
+      toast({ title: 'Ошибка запуска', variant: 'destructive' });
+    }
   };
 
   const handleCancelJob = async () => {
-    await DataAccess.cancelJob(job.id, () =>
-      toast({
-        title: 'Job canceled',
-        description: job.name,
-      })
-    );
+    try {
+      await DataAccess.cancelJob(job.id, () =>
+        toast({
+          title: 'Job canceled',
+          description: job.name,
+        })
+      );
+    } catch (e) {
+      toast({ title: 'Ошибка отмены', variant: 'destructive' });
+    }
   };
 
   return (
