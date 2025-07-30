@@ -21,6 +21,7 @@ export class JobService {
   private activeJobs: Map<string, NodeJS.Timeout> = new Map();
   private subscribers: Map<string, Set<JobSubscriber>> = new Map();
 
+  // Создаёт запись
   async create(name: string): Promise<Job> {
     const job = this.jobRepository.create({
       name,
@@ -29,11 +30,12 @@ export class JobService {
     return this.jobRepository.save(job);
   }
 
-  // Возвращает все задачи, хранящиеся в репозитории
+  // Получает все задачи
   async findAll(): Promise<Job[]> {
     return this.jobRepository.find();
   }
 
+  // Считает статистику
   async getStats(rangeDays = 7): Promise<JobsStats[]> {
     const start = startOfDay(addDays(new Date(), -(rangeDays - 1)));
 
@@ -94,12 +96,14 @@ export class JobService {
     return Object.values(stats);
   }
 
+  // Ищет задачу
   async findOne(id: string): Promise<Job> {
     const job = await this.jobRepository.findOneBy({ id });
     if (!job) throw new NotFoundException(`Job with ID ${id} not found`);
     return job;
   }
 
+  // Обновляет прогресс
   async updateProgress(
     id: string,
     progress: number,
@@ -127,6 +131,7 @@ export class JobService {
     return updatedJob;
   }
 
+  // Запускает задачу
   async startJob(id: string): Promise<Job> {
     const job = await this.findOne(id);
     if (job.status !== JobStatus.Queued && job.status !== JobStatus.Failed)
@@ -155,6 +160,7 @@ export class JobService {
     return job;
   }
 
+  // Отменяет задачу
   async cancelJob(id: string): Promise<Job> {
     const job = await this.findOne(id);
     if (job.status !== JobStatus.Running) {
@@ -184,6 +190,7 @@ export class JobService {
     return job;
   }
 
+  // Подписка на задачу
   subscribeToJob(id: string, callback: JobSubscriber): void {
     if (!this.subscribers.has(id)) {
       this.subscribers.set(id, new Set());
@@ -191,6 +198,7 @@ export class JobService {
     this.subscribers.get(id)?.add(callback);
   }
 
+  // Отписка от задачи
   unsubscribeFromJob(id: string, callback: JobSubscriber): void {
     const jobSubscribers = this.subscribers.get(id);
     if (jobSubscribers) {
@@ -201,6 +209,7 @@ export class JobService {
     }
   }
 
+  // Подписка на все
   async subscribeToAllJobs(callback: JobSubscriber): Promise<void> {
     const jobs = await this.findAll();
     for (const job of jobs) {
@@ -224,6 +233,7 @@ export class JobService {
     }
   }
 
+  // Отписка от всех
   unsubscribeFromAllJobs(callback: JobSubscriber): void {
     for (const [id, jobSubscribers] of this.subscribers.entries()) {
       jobSubscribers.delete(callback);
