@@ -7,7 +7,9 @@ import {
 } from '@async-workers/shared-types';
 
 class DataAccess {
-  private API = axios.create({ baseURL: '/api' });
+  private API = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
+  });
 
   private handleError = (err: unknown): Promise<never> => {
     console.error('DataAccess error', err);
