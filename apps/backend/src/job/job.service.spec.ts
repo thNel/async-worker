@@ -77,6 +77,11 @@ describe('JobService', () => {
     expect(result).toEqual(mockJob);
   });
 
+  it('should call repository.find when finding all jobs', async () => {
+    await service.findAll();
+    expect(repository.find).toHaveBeenCalled();
+  });
+
   it('should update job progress and add log', async () => {
     let subscriberResult: Job | null = null;
     service.subscribeToJob(mockJob.id, (job) => {
