@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { readFileSync } from 'fs';
 
 // Reading the SWC compilation config for the spec files
@@ -12,7 +11,7 @@ swcJestConfig.swcrc = false;
 export default {
   displayName: '@async-workers/backend',
   preset: '../../jest.preset.js',
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   transform: {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },

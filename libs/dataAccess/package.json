@@ -13,5 +13,14 @@
     },
     "./package.json": "./package.json"
   },
+  "nx": {
+    "targets": {
+      "test": {
+        "options": {
+          "passWithNoTests": true
+        }
+      }
+    }
+  },
   "dependencies": {}
 }

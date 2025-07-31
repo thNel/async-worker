@@ -34,6 +34,7 @@ describe('SseController', () => {
         }
       }),
     setHeader: jest.fn(),
+    flushHeaders: jest.fn(),
   };
 
   beforeEach(async () => {

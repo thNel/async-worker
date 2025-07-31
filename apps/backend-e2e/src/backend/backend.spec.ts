@@ -88,7 +88,7 @@ describe('Job API', () => {
     });
 
     eventSource.onopen = () => {
-      axios.post(`/jobs/${jobId}/cancel`);
+      setTimeout(() => axios.post(`/jobs/${jobId}/cancel`), 500);
     };
 
     await new Promise<void>((resolve, reject) => {

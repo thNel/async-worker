@@ -6,7 +6,9 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('DataAccess', () => {
   beforeEach(() => {
+    mockedAxios.get.mockReset();
     mockedAxios.create.mockReturnValue(mockedAxios);
+    DataAccess['API'] = mockedAxios;
   });
 
   it('should reject with message when request fails', async () => {
