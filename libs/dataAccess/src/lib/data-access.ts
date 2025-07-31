@@ -11,48 +11,87 @@ class DataAccess {
     baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   });
 
+  private handleError = (err: unknown): Promise<never> => {
+    console.error('DataAccess error', err);
+    if (axios.isAxiosError(err)) {
+      return Promise.reject(err.response?.data?.message ?? err.message);
+    }
+    if (err instanceof Error) {
+      return Promise.reject(err.message);
+    }
+    return Promise.reject(String(err));
+  };
+
   public getAllJobs = async (status?: JobStatus): Promise<Job[]> => {
-    const { data } = await this.API.get<Job[]>('/jobs', {
-      params: { status },
-    });
-    return data;
+    try {
+      const { data } = await this.API.get<Job[]>('/jobs', {
+        params: { status },
+      });
+      return data;
+    } catch (err) {
+      return this.handleError(err);
+    }
   };
 
   public getJobById = async (id: Nullish<string>): Promise<Job> => {
     if (!id) {
-      throw new Error('Job ID is required');
+      return Promise.reject('Job ID is required');
     }
-    const { data } = await this.API.get<Job>(`/jobs/${id}`);
-    return data;
+    try {
+      const { data } = await this.API.get<Job>(`/jobs/${id}`);
+      return data;
+    } catch (err) {
+      return this.handleError(err);
+    }
   };
 
   public createJob = async (name: string): Promise<Job> => {
-    const { data } = await this.API.post<Job>('/jobs', { name });
-    return data;
+    try {
+      const { data } = await this.API.post<Job>('/jobs', { name });
+      return data;
+    } catch (err) {
+      return this.handleError(err);
+    }
   };
 
   public getJobsSummary = async (): Promise<JobsSummary> => {
-    const { data } = await this.API.get<JobsSummary>('/jobs/summary');
-    return data;
+    try {
+      const { data } = await this.API.get<JobsSummary>('/jobs/summary');
+      return data;
+    } catch (err) {
+      return this.handleError(err);
+    }
   };
 
   public getJobsStats = async (days = 7): Promise<JobsStats[]> => {
-    const { data } = await this.API.get<JobsStats[]>(`/jobs/stats`, {
-      params: { days },
-    });
-    return data;
+    try {
+      const { data } = await this.API.get<JobsStats[]>(`/jobs/stats`, {
+        params: { days },
+      });
+      return data;
+    } catch (err) {
+      return this.handleError(err);
+    }
   };
 
   public startJob = async (jobId: string, cb?: () => void): Promise<Job> => {
-    const { data } = await this.API.post<Job>(`/jobs/${jobId}/start`);
-    cb?.();
-    return data;
+    try {
+      const { data } = await this.API.post<Job>(`/jobs/${jobId}/start`);
+      cb?.();
+      return data;
+    } catch (err) {
+      return this.handleError(err);
+    }
   };
 
   public cancelJob = async (jobId: string, cb?: () => void): Promise<Job> => {
-    const { data } = await this.API.post<Job>(`/jobs/${jobId}/cancel`);
-    cb?.();
-    return data;
+    try {
+      const { data } = await this.API.post<Job>(`/jobs/${jobId}/cancel`);
+      cb?.();
+      return data;
+    } catch (err) {
+      return this.handleError(err);
+    }
   };
 }
 
