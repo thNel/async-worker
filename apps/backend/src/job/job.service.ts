@@ -21,7 +21,7 @@ export class JobService {
   private activeJobs: Map<string, NodeJS.Timeout> = new Map();
   private subscribers: Map<string, Set<JobSubscriber>> = new Map();
 
-  // Создаёт запись
+  // Создаёт задачу
   async create(name: string): Promise<Job> {
     const job = this.jobRepository.create({
       name,
@@ -103,7 +103,7 @@ export class JobService {
     return job;
   }
 
-  // Обновляет прогресс
+  // Обновляет прогресс задачи
   async updateProgress(
     id: string,
     progress: number,
