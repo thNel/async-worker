@@ -3,6 +3,8 @@ import { useJobsStats } from '@/utils/queries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RingChart from '@/components/ui/ring-chart';
+import { useSortableData } from '@/hooks/useSortableData';
+import { ArrowUpDown } from 'lucide-react';
 
 export default function DashboardPage() {
   const [days, setDays] = useState(7);
@@ -24,11 +26,45 @@ export default function DashboardPage() {
 
   const totalCount = totals.queued + totals.running + totals.done + totals.failed;
   const segments = [
-    { value: (totals.done / totalCount) * 100 || 0, colorClass: 'stroke-chart-1' },
-    { value: (totals.running / totalCount) * 100 || 0, colorClass: 'stroke-chart-2' },
-    { value: (totals.queued / totalCount) * 100 || 0, colorClass: 'stroke-chart-3' },
-    { value: (totals.failed / totalCount) * 100 || 0, colorClass: 'stroke-chart-4' },
+    {
+      value: (totals.done / totalCount) * 100 || 0,
+      colorClass: 'stroke-chart-1',
+      label: 'Выполнено',
+      count: totals.done,
+    },
+    {
+      value: (totals.running / totalCount) * 100 || 0,
+      colorClass: 'stroke-chart-2',
+      label: 'В процессе',
+      count: totals.running,
+    },
+    {
+      value: (totals.queued / totalCount) * 100 || 0,
+      colorClass: 'stroke-chart-3',
+      label: 'В очереди',
+      count: totals.queued,
+    },
+    {
+      value: (totals.failed / totalCount) * 100 || 0,
+      colorClass: 'stroke-chart-4',
+      label: 'Ошибки',
+      count: totals.failed,
+    },
   ];
+
+  const rows = useMemo(
+    () =>
+      stats?.map((d) => ({
+        startDate: d.startDate,
+        done: d.done.count,
+        running: d.running.count,
+        queued: d.queued.count,
+        failed: d.failed.count,
+      })) || [],
+    [stats]
+  );
+
+  const { sorted, sortKey, direction, requestSort } = useSortableData(rows);
 
   return (
     <div className="space-y-4">
@@ -81,23 +117,48 @@ export default function DashboardPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left border-b">
-                <th className="py-2">Дата</th>
-                <th>Выполнено</th>
-                <th>В процессе</th>
-                <th>В очереди</th>
-                <th>Ошибки</th>
+                <th className="py-2 cursor-pointer" onClick={() => requestSort('startDate')}>
+                  <div className="flex items-center gap-1">
+                    Дата
+                    <ArrowUpDown className="size-3" />
+                  </div>
+                </th>
+                <th className="cursor-pointer" onClick={() => requestSort('done')}>
+                  <div className="flex items-center gap-1">
+                    Выполнено
+                    <ArrowUpDown className="size-3" />
+                  </div>
+                </th>
+                <th className="cursor-pointer" onClick={() => requestSort('running')}>
+                  <div className="flex items-center gap-1">
+                    В процессе
+                    <ArrowUpDown className="size-3" />
+                  </div>
+                </th>
+                <th className="cursor-pointer" onClick={() => requestSort('queued')}>
+                  <div className="flex items-center gap-1">
+                    В очереди
+                    <ArrowUpDown className="size-3" />
+                  </div>
+                </th>
+                <th className="cursor-pointer" onClick={() => requestSort('failed')}>
+                  <div className="flex items-center gap-1">
+                    Ошибки
+                    <ArrowUpDown className="size-3" />
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {stats.map((day) => (
+              {sorted.map((day) => (
                 <tr key={day.startDate.toString()} className="border-b hover:bg-muted/50">
                   <td className="py-2">
                     {new Date(day.startDate).toLocaleDateString()}
                   </td>
-                  <td>{day.done.count}</td>
-                  <td>{day.running.count}</td>
-                  <td>{day.queued.count}</td>
-                  <td>{day.failed.count}</td>
+                  <td>{day.done}</td>
+                  <td>{day.running}</td>
+                  <td>{day.queued}</td>
+                  <td>{day.failed}</td>
                 </tr>
               ))}
             </tbody>

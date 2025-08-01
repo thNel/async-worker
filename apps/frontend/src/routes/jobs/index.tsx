@@ -5,10 +5,13 @@ import { useJobs } from '@/hooks/useJobStore';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import NewJob from '@/components/modals/newJob';
+import { useSortableData } from '@/hooks/useSortableData';
+import { ArrowUpDown } from 'lucide-react';
 
 export default function JobsPage() {
   const { isLoading } = useJobsQuery();
   const jobs = useJobs();
+  const { sorted, requestSort } = useSortableData(jobs);
 
   useSseListener('all');
 
@@ -30,13 +33,28 @@ export default function JobsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left border-b">
-              <th className="py-2">Название</th>
-              <th>Статус</th>
-              <th>Прогресс</th>
+              <th className="py-2 cursor-pointer" onClick={() => requestSort('name')}>
+                <div className="flex items-center gap-1">
+                  Название
+                  <ArrowUpDown className="size-3" />
+                </div>
+              </th>
+              <th className="cursor-pointer" onClick={() => requestSort('status')}>
+                <div className="flex items-center gap-1">
+                  Статус
+                  <ArrowUpDown className="size-3" />
+                </div>
+              </th>
+              <th className="cursor-pointer" onClick={() => requestSort('progress')}>
+                <div className="flex items-center gap-1">
+                  Прогресс
+                  <ArrowUpDown className="size-3" />
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
-            {jobs.map((job) => (
+            {sorted.map((job) => (
               <tr key={job.id} className="border-b hover:bg-muted/50">
                 <td className="py-2">
                   <Link to={`/jobs/${job.id}`} className="underline">
